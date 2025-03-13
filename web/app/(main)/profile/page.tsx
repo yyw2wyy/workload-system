@@ -59,6 +59,7 @@ export default function ProfilePage() {
         duration: 3000,
         position: "top-center",
       })
+      // 使用 user 状态中的最新数据
       setFormData({
         username: user?.username || "",
         email: user?.email || "",
@@ -146,6 +147,15 @@ export default function ProfilePage() {
     }
   }
 
+  // 在对话框打开时，使用最新的用户数据
+  const handleEditDialogOpen = () => {
+    setFormData({
+      username: user?.username || "",
+      email: user?.email || "",
+    })
+    setShowEditDialog(true)
+  }
+
   if (!user) {
     return null
   }
@@ -183,7 +193,7 @@ export default function ProfilePage() {
 
           <div className="flex justify-end space-x-2 mt-6">
             <Button
-              onClick={() => setShowEditDialog(true)}
+              onClick={handleEditDialogOpen}
               variant="outline"
             >
               更改资料

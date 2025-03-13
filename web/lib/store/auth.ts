@@ -67,6 +67,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set((state) => ({
         user: state.user ? { ...state.user, ...user } : null,
       }))
+      return user
     } catch (error) {
       throw error
     }
