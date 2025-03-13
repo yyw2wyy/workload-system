@@ -5,10 +5,22 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { toast } from "sonner"
 
 import { registerSchema } from "@/lib/validations/auth"
 import { useAuthStore } from "@/lib/store/auth"
 import type { RegisterCredentials } from "@/lib/types/auth"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export default function RegisterPage() {
   const [error, setError] = useState<string>("")
@@ -28,14 +40,78 @@ export default function RegisterPage() {
       setError("")
       await registerUser(data)
       router.push("/")
+      toast.success('注册成功！请登录', {
+        position: "top-center",
+        duration: 3000,
+      })
     } catch (err: any) {
       console.error("Register error:", err)
-      setError(
-        err.response?.data?.detail || 
-        err.response?.data?.message || 
-        err.message || 
-        "注册失败，请检查输入信息是否正确"
-      )
+      const errorData = err.response?.data || {}
+      
+      // 错误信息翻译映射
+      const errorTranslations: Record<string, string> = {
+        "This password is too short. It must contain at least 8 characters.": "密码太短。密码长度必须至少为8个字符。",
+        "This password is too common.": "密码太常见，请使用更复杂的密码。",
+        "This password is entirely numeric.": "密码不能全为数字，请包含字母或特殊字符。",
+        "The two password fields didn't match.": "两次输入的密码不一致。",
+        "A user with that username already exists.": "该用户名已被注册。"
+      }
+
+      // 收集所有错误信息
+      const errors: { fieldName: string; message: string }[] = []
+      
+      Object.entries(errorData).forEach(([field, fieldErrors]) => {
+        if (Array.isArray(fieldErrors)) {
+          fieldErrors.forEach((error: string) => {
+            let fieldName = field
+            switch (field) {
+              case 'username':
+                fieldName = '用户名'
+                break
+              case 'password':
+                fieldName = '密码'
+                break
+              case 'confirm_password':
+                fieldName = '确认密码'
+                break
+              case 'email':
+                fieldName = '邮箱'
+                break
+            }
+            
+            // 翻译错误信息
+            const translatedError = errorTranslations[error] || error
+            errors.push({
+              fieldName,
+              message: translatedError
+            })
+          })
+        }
+      })
+
+      // 按顺序显示错误信息
+      const showNextError = (index: number) => {
+        if (index < errors.length) {
+          const error = errors[index]
+          toast.error(`${error.fieldName}：${error.message}`, {
+            duration: 1500,
+            position: "top-center",
+          })
+          // 1.5秒后显示下一个错误
+          setTimeout(() => showNextError(index + 1), 1500)
+        }
+      }
+
+      // 开始显示第一个错误
+      if (errors.length > 0) {
+        showNextError(0)
+      } else {
+        // 如果没有具体的错误信息，显示通用错误
+        toast.error("注册失败，请重试", {
+          duration: 3000,
+          position: "top-center",
+        })
+      }
     }
   }
 

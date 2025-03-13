@@ -65,10 +65,64 @@ export default function ProfilePage() {
         email: user?.email || "",
       })
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "更新失败，请重试", {
-        position: "top-center",
-        duration: 3000,
+      const errorData = error.response?.data || {}
+      
+      // 错误信息翻译映射
+      const errorTranslations: Record<string, string> = {
+        'A user with that username already exists.': '该用户名已被其他用户使用',
+        'A user with this email already exists.': '该邮箱已被其他用户使用',
+        'Invalid email format.': '邮箱格式不正确',
+      }
+
+      // 收集所有错误信息
+      const errors: { fieldName: string; message: string }[] = []
+      
+      Object.entries(errorData).forEach(([field, fieldErrors]) => {
+        if (Array.isArray(fieldErrors)) {
+          fieldErrors.forEach((error: string) => {
+            let fieldName = field
+            switch (field) {
+              case 'username':
+                fieldName = '用户名'
+                break
+              case 'email':
+                fieldName = '邮箱'
+                break
+            }
+            
+            // 翻译错误信息
+            const translatedError = errorTranslations[error] || error
+            errors.push({
+              fieldName,
+              message: translatedError
+            })
+          })
+        }
       })
+
+      // 按顺序显示错误信息
+      const showNextError = (index: number) => {
+        if (index < errors.length) {
+          const error = errors[index]
+          toast.error(`${error.fieldName}：${error.message}`, {
+            duration: 1500,
+            position: "top-center",
+          })
+          // 1.5秒后显示下一个错误
+          setTimeout(() => showNextError(index + 1), 1500)
+        }
+      }
+
+      // 开始显示第一个错误
+      if (errors.length > 0) {
+        showNextError(0)
+      } else {
+        // 如果没有具体的错误信息，显示通用错误
+        toast.error(error.response?.data?.message || "更新失败，请重试", {
+          duration: 3000,
+          position: "top-center",
+        })
+      }
     } finally {
       setIsSubmitting(false)
     }
