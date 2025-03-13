@@ -36,4 +36,39 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 class UserLoginSerializer(serializers.Serializer):
     """用户登录序列化器"""
     username = serializers.CharField(required=True)
-    password = serializers.CharField(required=True, write_only=True) 
+    password = serializers.CharField(required=True, write_only=True)
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """用户信息更新序列化器"""
+    class Meta:
+        model = User
+        fields = ['username', 'email']
+
+    def validate_username(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(username=value).exists():
+            raise serializers.ValidationError("该用户名已被使用")
+        return value
+
+    def validate_email(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(email=value).exists():
+            raise serializers.ValidationError("该邮箱已被使用")
+        return value
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """密码修改序列化器"""
+    current_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, validators=[validate_password])
+    confirm_password = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({"new_password": "两次输入的新密码不一致"})
+        return attrs
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("当前密码不正确")
+        return value 

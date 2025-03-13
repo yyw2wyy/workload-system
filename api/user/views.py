@@ -4,7 +4,13 @@ from rest_framework import status, generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
-from .serializers import UserSerializer, UserRegisterSerializer, UserLoginSerializer
+from .serializers import (
+    UserSerializer,
+    UserRegisterSerializer,
+    UserLoginSerializer,
+    UserUpdateSerializer,
+    ChangePasswordSerializer,
+)
 
 User = get_user_model()
 
@@ -52,3 +58,39 @@ class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+class UserUpdateView(generics.UpdateAPIView):
+    """用户信息更新视图"""
+    serializer_class = UserUpdateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response({
+            "message": "个人信息更新成功",
+            "user": UserSerializer(instance).data
+        })
+
+class ChangePasswordView(generics.GenericAPIView):
+    """密码修改视图"""
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            return Response({
+                "message": "密码修改成功"
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
