@@ -14,8 +14,20 @@ class WorkloadViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """获取当前用户提交的工作量列表"""
-        return Workload.objects.filter(submitter=self.request.user)
+        """获取用户可以访问的工作量列表"""
+        user = self.request.user
+        if user.role == 'student':
+            # 学生只能看到自己提交的工作量
+            return Workload.objects.filter(submitter=user)
+        elif user.role == 'mentor':
+            # 导师可以看到自己提交的和需要审核的工作量
+            return Workload.objects.filter(
+                Q(submitter=user) | Q(reviewer=user, submitter__role='student', status='pending')
+            )
+        elif user.role == 'teacher':
+            # 教师可以看到所有工作量
+            return Workload.objects.all()
+        return Workload.objects.none()
 
     def perform_create(self, serializer):
         """创建工作量时设置提交者"""
@@ -54,8 +66,8 @@ class WorkloadViewSet(viewsets.ModelViewSet):
         elif user.role == 'teacher':
             # 教师获取所有需要教师审核的工作量
             queryset = Workload.objects.filter(
-                Q(reviewer=user) &
-                (Q(status='pending') | Q(status='mentor_approved'))
+                Q(status='mentor_approved') |  # 导师已审核的工作量
+                Q(submitter__role='mentor', status='pending')  # 导师提交的待审核工作量
             )
         else:
             return Response(
@@ -73,7 +85,8 @@ class WorkloadViewSet(viewsets.ModelViewSet):
         if user.role == 'mentor':
             # 导师获取自己已审核的工作量
             queryset = Workload.objects.filter(
-                reviewer=user
+                reviewer=user,
+                submitter__role='student'
             ).exclude(status='pending')
         else:
             return Response(
@@ -102,6 +115,27 @@ class WorkloadViewSet(viewsets.ModelViewSet):
     def review(self, request, pk=None):
         """审核工作量"""
         instance = self.get_object()
+        user = request.user
+
+        # 检查审核权限
+        if user.role == 'mentor':
+            if instance.submitter.role != 'student' or instance.reviewer != user:
+                return Response(
+                    {"detail": "您不是该工作量的指定审核导师"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        elif user.role == 'teacher':
+            if instance.submitter.role == 'student' and instance.status != 'mentor_approved':
+                return Response(
+                    {"detail": "学生提交的工作量需要导师审核通过后才能进行教师审核"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        else:
+            return Response(
+                {"detail": "只有导师和教师可以审核工作量"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         serializer = WorkloadReviewSerializer(
             instance,
             data=request.data,

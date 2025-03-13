@@ -15,9 +15,9 @@ class WorkloadSerializer(serializers.ModelSerializer):
     submitter = UserSimpleSerializer(read_only=True)
     reviewer = UserSimpleSerializer(read_only=True)
     reviewer_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.filter(role__in=['mentor', 'teacher']),
+        queryset=User.objects.filter(role='mentor'),
         write_only=True,
-        required=True
+        required=False
     )
 
     class Meta:
@@ -31,29 +31,24 @@ class WorkloadSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['status', 'mentor_comment', 'teacher_comment', 'created_at', 'updated_at']
 
-    def validate_reviewer_id(self, value):
-        """验证审核者身份"""
+    def validate(self, data):
+        """验证数据"""
         request = self.context.get('request')
         if not request or not request.user:
             raise serializers.ValidationError("无法获取当前用户信息")
 
-        # 获取当前用户和目标审核者
-        current_user = request.user
-        reviewer = value
+        # 如果是学生提交，必须指定导师
+        if request.user.role == 'student' and not data.get('reviewer_id'):
+            raise serializers.ValidationError("学生提交工作量时必须指定导师")
 
-        # 验证审核者角色
-        if current_user.role == 'student' and reviewer.role != 'mentor':
-            raise serializers.ValidationError("学生提交的工作量必须由导师审核")
-        elif current_user.role == 'mentor' and reviewer.role != 'teacher':
-            raise serializers.ValidationError("导师提交的工作量必须由教师审核")
-
-        return value
+        return data
 
     def create(self, validated_data):
         """创建工作量时设置提交者和审核者"""
-        reviewer = validated_data.pop('reviewer_id')
+        reviewer = validated_data.pop('reviewer_id', None)
         validated_data['submitter'] = self.context['request'].user
-        validated_data['reviewer'] = reviewer
+        if reviewer:
+            validated_data['reviewer'] = reviewer
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
@@ -77,24 +72,18 @@ class WorkloadReviewSerializer(serializers.ModelSerializer):
         if not instance:
             raise serializers.ValidationError("无法获取工作量信息")
             
-        # 验证审核权限
-        if user.role == 'mentor' and instance.reviewer != user:
-            raise serializers.ValidationError("您不是该工作量的指定审核导师")
-        elif user.role == 'teacher' and instance.reviewer != user:
-            raise serializers.ValidationError("您不是该工作量的指定审核教师")
-            
-        # 验证审核流程
+        # 验证审核权限和状态
         if user.role == 'mentor':
-            if instance.submitter.role != 'student':
-                raise serializers.ValidationError("导师只能审核学生提交的工作量")
+            if instance.submitter.role != 'student' or instance.reviewer != user:
+                raise serializers.ValidationError("您不是该工作量的指定审核导师")
             if data['status'] not in ['mentor_approved', 'mentor_rejected']:
                 raise serializers.ValidationError("导师只能将状态设置为'导师已审核'或'导师已驳回'")
             if not data.get('mentor_comment'):
                 raise serializers.ValidationError("请填写审核评论")
                 
         elif user.role == 'teacher':
-            if instance.status not in ['pending', 'mentor_approved'] and instance.submitter.role == 'student':
-                raise serializers.ValidationError("教师只能审核待审核或导师已审核的工作量")
+            if instance.submitter.role == 'student' and instance.status != 'mentor_approved':
+                raise serializers.ValidationError("学生提交的工作量需要导师审核通过后才能进行教师审核")
             if data['status'] not in ['teacher_approved', 'teacher_rejected']:
                 raise serializers.ValidationError("教师只能将状态设置为'教师已审核'或'教师已驳回'")
             if not data.get('teacher_comment'):
