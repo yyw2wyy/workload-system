@@ -1,0 +1,36 @@
+# Django 和 DRF 核心依赖
+Django==5.0.2
+djangorestframework==3.14.0
+
+# CORS 支持
+django-cors-headers==4.3.1
+
+# 认证相关
+djangorestframework-simplejwt==5.3.1
+
+# 数据库驱动（SQLite 已内置在 Python 中）
+# 如果之后需要使用 MySQL 或 PostgreSQL，可以取消注释相应的行
+# psycopg2-binary==2.9.9  # PostgreSQL
+# mysqlclient==2.2.4      # MySQL
+
+# 文件上传和图片处理
+Pillow==10.2.0
+python-magic==0.4.27      # 文件类型检测
+
+# API 文档
+drf-yasg==1.21.7
+
+# 开发工具
+django-debug-toolbar==4.3.0
+
+# 时间处理
+pytz==2024.1
+
+# 环境变量管理
+python-dotenv==1.0.1
+
+# 密码哈希
+bcrypt==4.1.2
+
+# 工具库
+requests==2.31.0 
