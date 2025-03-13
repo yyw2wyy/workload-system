@@ -40,11 +40,13 @@ INSTALLED_APPS = [
     "user",
     "rest_framework",
     "workload",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",  # 添加CORS中间件，必须在CommonMiddleware之前
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -139,10 +141,16 @@ REST_FRAMEWORK = {
     ],
 }
 
+# CORS设置
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # Next.js前端地址
+]
+CORS_ALLOW_CREDENTIALS = True  # 允许跨域请求携带凭证
+
 # CSRF设置
 CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
 CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_SECURE = False  # 开发环境设置为False，生产环境应该设置为True
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']  # 添加前端域名
