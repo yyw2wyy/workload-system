@@ -13,6 +13,7 @@ import dayjs from "dayjs"
 import zhCN from "antd/locale/zh_CN"
 import "dayjs/locale/zh-cn"
 import "antd/dist/reset.css"
+import { useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -103,6 +104,7 @@ type Reviewer = {
 }
 
 export default function WorkloadSubmitPage() {
+  const router = useRouter()
   const form = useForm<WorkloadFormValues>({
     resolver: zodResolver(workloadFormSchema),
     defaultValues,
@@ -167,7 +169,9 @@ export default function WorkloadSubmitPage() {
         duration: 3000,
       })
       
-      form.reset()
+      // 重置表单并刷新页面
+      form.reset(defaultValues)
+      router.refresh()
     } catch (error: any) {
       console.error("提交工作量失败:", error)
       
@@ -246,7 +250,7 @@ export default function WorkloadSubmitPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>工作量来源</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="请选择工作量来源" />
@@ -270,7 +274,7 @@ export default function WorkloadSubmitPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>工作量类型</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="请选择工作量类型" />
@@ -346,7 +350,7 @@ export default function WorkloadSubmitPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>工作强度类型</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="请选择工作强度类型" />
@@ -427,7 +431,7 @@ export default function WorkloadSubmitPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>审核人</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="请选择审核人" />
@@ -448,7 +452,11 @@ export default function WorkloadSubmitPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full border-2 border-black hover:text-white py-6 text-lg font-medium transition-all"
+              >
                 {isSubmitting ? "提交中..." : "提交"}
               </Button>
             </form>
