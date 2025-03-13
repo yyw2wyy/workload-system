@@ -106,12 +106,15 @@ export default function ProfilePage() {
         'This password is too short. It must contain at least 8 characters.': '密码太短。密码长度必须至少为8个字符。',
         'This password is too common.': '密码太常见，请使用更复杂的密码。',
         'This password is entirely numeric.': '密码不能全为数字，请包含字母或特殊字符。',
+        'Invalid password.': '当前密码错误',
       }
 
       // 处理每个字段的所有错误信息
-      Object.entries(errorData).forEach(([field, errors]) => {
-        if (Array.isArray(errors)) {
-          errors.forEach((error: string) => {
+      const errors: { fieldName: string; message: string }[] = []
+      
+      Object.entries(errorData).forEach(([field, fieldErrors]) => {
+        if (Array.isArray(fieldErrors)) {
+          fieldErrors.forEach((error: string) => {
             let fieldName = field
             switch (field) {
               case 'current_password':
@@ -127,16 +130,32 @@ export default function ProfilePage() {
             
             // 翻译错误信息
             const translatedError = errorTranslations[error] || error
-            toast.error(`${fieldName}：${translatedError}`, {
-              duration: 5000,
-              position: "top-center",
+            errors.push({
+              fieldName,
+              message: translatedError
             })
           })
         }
       })
 
-      // 如果没有具体的错误信息，显示通用错误
-      if (Object.keys(errorData).length === 0) {
+      // 按顺序显示错误信息
+      const showNextError = (index: number) => {
+        if (index < errors.length) {
+          const error = errors[index]
+          toast.error(`${error.fieldName}：${error.message}`, {
+            duration: 1500,
+            position: "top-center",
+          })
+          // 5秒后显示下一个错误
+          setTimeout(() => showNextError(index + 1), 1500)
+        }
+      }
+
+      // 开始显示第一个错误
+      if (errors.length > 0) {
+        showNextError(0)
+      } else {
+        // 如果没有具体的错误信息，显示通用错误
         toast.error("密码修改失败，请重试", {
           duration: 3000,
           position: "top-center",
