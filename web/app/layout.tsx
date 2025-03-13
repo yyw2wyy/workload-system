@@ -4,6 +4,7 @@ import "./globals.css";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { Navbar } from "@/components/layout/navbar";
 import { useAuthStore } from "@/lib/store/auth";
+import { Toaster } from "sonner"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,6 +27,7 @@ export default function RootLayout({
             {children}
           </main>
         </ProtectedRoute>
+        <Toaster richColors position="top-center" />
       </body>
     </html>
   );
