@@ -61,3 +61,33 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* DatePicker 自定义样式 */
+.ant-picker {
+  height: 40px;
+  border-radius: 6px;
+  border-color: hsl(var(--input));
+  background-color: transparent;
+}
+
+.ant-picker:hover {
+  border-color: hsl(var(--input));
+}
+
+.ant-picker-focused {
+  border-color: hsl(var(--ring));
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.3);
+}
+
+.ant-picker-panel {
+  border-radius: 6px;
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+  border-color: hsl(var(--primary));
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
+  background-color: hsl(var(--primary));
+}
