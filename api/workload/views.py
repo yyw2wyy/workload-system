@@ -1,8 +1,10 @@
 from django.shortcuts import render
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from django.db.models import Q
 from .models import Workload
-from .serializers import WorkloadSerializer
+from .serializers import WorkloadSerializer, WorkloadReviewSerializer
 
 # Create your views here.
 
@@ -37,3 +39,82 @@ class WorkloadViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         instance.delete()
+
+    @action(detail=False, methods=['get'])
+    def pending_review(self, request):
+        """获取待审核的工作量列表"""
+        user = request.user
+        if user.role == 'mentor':
+            # 导师获取自己需要审核的待审核工作量
+            queryset = Workload.objects.filter(
+                reviewer=user,
+                status='pending',
+                submitter__role='student'
+            )
+        elif user.role == 'teacher':
+            # 教师获取所有需要教师审核的工作量
+            queryset = Workload.objects.filter(
+                Q(reviewer=user) &
+                (Q(status='pending') | Q(status='mentor_approved'))
+            )
+        else:
+            return Response(
+                {"detail": "只有导师和教师可以查看待审核工作量"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def reviewed(self, request):
+        """获取已审核的工作量列表"""
+        user = request.user
+        if user.role == 'mentor':
+            # 导师获取自己已审核的工作量
+            queryset = Workload.objects.filter(
+                reviewer=user
+            ).exclude(status='pending')
+        else:
+            return Response(
+                {"detail": "只有导师可以查看已审核工作量列表"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def all_workloads(self, request):
+        """教师获取所有工作量列表"""
+        user = request.user
+        if user.role != 'teacher':
+            return Response(
+                {"detail": "只有教师可以查看所有工作量"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        queryset = Workload.objects.all()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def review(self, request, pk=None):
+        """审核工作量"""
+        instance = self.get_object()
+        serializer = WorkloadReviewSerializer(
+            instance,
+            data=request.data,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            serializer.save()
+            # 返回更新后的完整工作量信息
+            return Response(
+                self.get_serializer(instance).data
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )

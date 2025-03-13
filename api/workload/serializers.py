@@ -61,4 +61,43 @@ class WorkloadSerializer(serializers.ModelSerializer):
         if 'reviewer_id' in validated_data:
             reviewer = validated_data.pop('reviewer_id')
             validated_data['reviewer'] = reviewer
-        return super().update(instance, validated_data) 
+        return super().update(instance, validated_data)
+
+class WorkloadReviewSerializer(serializers.ModelSerializer):
+    """工作量审核序列化器"""
+    class Meta:
+        model = Workload
+        fields = ['status', 'mentor_comment', 'teacher_comment']
+        
+    def validate(self, data):
+        """验证审核状态和评论"""
+        user = self.context['request'].user
+        instance = self.instance
+        
+        if not instance:
+            raise serializers.ValidationError("无法获取工作量信息")
+            
+        # 验证审核权限
+        if user.role == 'mentor' and instance.reviewer != user:
+            raise serializers.ValidationError("您不是该工作量的指定审核导师")
+        elif user.role == 'teacher' and instance.reviewer != user:
+            raise serializers.ValidationError("您不是该工作量的指定审核教师")
+            
+        # 验证审核流程
+        if user.role == 'mentor':
+            if instance.submitter.role != 'student':
+                raise serializers.ValidationError("导师只能审核学生提交的工作量")
+            if data['status'] not in ['mentor_approved', 'mentor_rejected']:
+                raise serializers.ValidationError("导师只能将状态设置为'导师已审核'或'导师已驳回'")
+            if not data.get('mentor_comment'):
+                raise serializers.ValidationError("请填写审核评论")
+                
+        elif user.role == 'teacher':
+            if instance.status not in ['pending', 'mentor_approved'] and instance.submitter.role == 'student':
+                raise serializers.ValidationError("教师只能审核待审核或导师已审核的工作量")
+            if data['status'] not in ['teacher_approved', 'teacher_rejected']:
+                raise serializers.ValidationError("教师只能将状态设置为'教师已审核'或'教师已驳回'")
+            if not data.get('teacher_comment'):
+                raise serializers.ValidationError("请填写审核评论")
+                
+        return data 
