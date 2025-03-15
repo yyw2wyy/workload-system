@@ -37,6 +37,21 @@ class UserLoginSerializer(serializers.Serializer):
     """用户登录序列化器"""
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True, write_only=True)
+    role = serializers.ChoiceField(choices=User.ROLE_CHOICES, required=True)
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        role = attrs.get('role')
+        
+        # 验证用户角色是否匹配
+        try:
+            user = User.objects.get(username=username)
+            if user.role != role:
+                raise serializers.ValidationError({"role": "所选角色与用户角色不匹配"})
+        except User.DoesNotExist:
+            pass  # 用户不存在的错误会在视图中处理
+            
+        return attrs
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     """用户信息更新序列化器"""

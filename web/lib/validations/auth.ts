@@ -4,6 +4,9 @@ import { UserRole } from "../types/auth"
 export const loginSchema = z.object({
   username: z.string().min(1, "用户名不能为空"),
   password: z.string().min(6, "密码至少需要6个字符"),
+  role: z.enum(["student", "mentor", "teacher"], {
+    required_error: "请选择用户角色",
+  }),
 })
 
 export const registerSchema = z.object({

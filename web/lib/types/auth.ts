@@ -10,6 +10,7 @@ export interface User {
 export interface LoginCredentials {
   username: string
   password: string
+  role: UserRole
 }
 
 export interface RegisterCredentials {
