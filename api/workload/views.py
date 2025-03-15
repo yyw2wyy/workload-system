@@ -131,7 +131,7 @@ class WorkloadViewSet(viewsets.ModelViewSet):
 
         # 检查审核权限
         if user.role == 'mentor':
-            if instance.submitter.role != 'student' or instance.reviewer != user:
+            if instance.submitter.role != 'student' or instance.mentor_reviewer != user:
                 return Response(
                     {"detail": "您不是该工作量的指定审核导师"},
                     status=status.HTTP_403_FORBIDDEN
