@@ -55,8 +55,8 @@ const workloadFormSchema = z.object({
   }),
   intensityType: z.string().min(1, "请选择工作强度类型"),
   intensityValue: z.string().min(1, "请输入工作强度值"),
-  image: z.any().optional(),
-  file: z.any().optional(),
+  image_path: z.any().optional(),
+  file_path: z.any().optional(),
   reviewer: z.string().min(1, "请选择审核人"),
 }).refine((data) => {
   if (!data.startDate || !data.endDate) return true
@@ -150,11 +150,11 @@ export default function WorkloadSubmitPage() {
       formData.append("reviewer_id", data.reviewer)
 
       // 添加文件（如果有）
-      if (data.image) {
-        formData.append("image_path", data.image)
+      if (data.image_path) {
+        formData.append("image_path", data.image_path)
       }
-      if (data.file) {
-        formData.append("file_path", data.file)
+      if (data.file_path) {
+        formData.append("file_path", data.file_path)
       }
 
       // 调用后端 API
@@ -385,7 +385,7 @@ export default function WorkloadSubmitPage() {
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="image"
+                  name="image_path"
                   render={({ field: { value, onChange, ...field } }) => (
                     <FormItem>
                       <FormLabel>相关图片</FormLabel>
@@ -406,7 +406,7 @@ export default function WorkloadSubmitPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="file"
+                  name="file_path"
                   render={({ field: { value, onChange, ...field } }) => (
                     <FormItem>
                       <FormLabel>相关文件</FormLabel>
