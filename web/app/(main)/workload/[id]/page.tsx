@@ -67,6 +67,8 @@ type Workload = {
   status: keyof typeof statusMap
   mentor_comment?: string
   teacher_comment?: string
+  mentor_review_time?: string
+  teacher_review_time?: string
   created_at: string
   updated_at: string
 }
@@ -79,7 +81,14 @@ export default function WorkloadDetailPage({
   const router = useRouter()
   const [workload, setWorkload] = useState<Workload | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isStudent, setIsStudent] = useState(false)
   const resolvedParams = use(params)
+
+  // 从本地存储获取用户角色
+  useEffect(() => {
+    const userRole = localStorage.getItem('userRole')
+    setIsStudent(userRole === 'student')
+  }, [])
 
   useEffect(() => {
     const fetchWorkload = async () => {
@@ -145,6 +154,7 @@ export default function WorkloadDetailPage({
           <h3 className="text-lg font-medium">工作量详情</h3>
         </div>
 
+        {/* 基本信息卡片 */}
         <Card>
           <CardHeader>
             <CardTitle>{workload.name}</CardTitle>
@@ -229,55 +239,6 @@ export default function WorkloadDetailPage({
 
             <Separator />
 
-            {/* 审核信息 */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>审核状态</Label>
-                <div>
-                  <span className={`px-2 py-1 rounded-full text-sm ${
-                    workload.status.includes("approved") 
-                      ? "bg-green-100 text-green-800"
-                      : workload.status.includes("rejected")
-                      ? "bg-red-100 text-red-800"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}>
-                    {statusMap[workload.status]}
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>导师审核人</Label>
-                  <div>{workload.mentor_reviewer?.username || '-'}</div>
-                </div>
-                <div className="space-y-2">
-                  <Label>教师审核人</Label>
-                  <div>{workload.teacher_reviewer?.username || '-'}</div>
-                </div>
-              </div>
-
-              {workload.mentor_comment && (
-                <div className="space-y-2">
-                  <Label>导师评论</Label>
-                  <div className="whitespace-pre-wrap rounded-lg border p-4">
-                    {workload.mentor_comment}
-                  </div>
-                </div>
-              )}
-
-              {workload.teacher_comment && (
-                <div className="space-y-2">
-                  <Label>教师评论</Label>
-                  <div className="whitespace-pre-wrap rounded-lg border p-4">
-                    {workload.teacher_comment}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
             {/* 时间信息 */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -287,6 +248,84 @@ export default function WorkloadDetailPage({
               <div className="space-y-2">
                 <Label>更新时间</Label>
                 <div>{format(new Date(workload.updated_at), "yyyy年MM月dd日 HH:mm:ss")}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 审核信息卡片 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>审核信息</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* 审核状态 */}
+            <div className="space-y-2">
+              <Label>审核状态</Label>
+              <div>
+                <span className={`px-2 py-1 rounded-full text-sm ${
+                  workload.status.includes("approved") 
+                    ? "bg-green-100 text-green-800"
+                    : workload.status.includes("rejected")
+                    ? "bg-red-100 text-red-800"
+                    : "bg-yellow-100 text-yellow-800"
+                }`}>
+                  {statusMap[workload.status]}
+                </span>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* 导师审核信息 */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">导师审核</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>审核人</Label>
+                  <div>{workload.mentor_reviewer?.username || '-'}</div>
+                </div>
+                <div className="space-y-2">
+                  <Label>审核时间</Label>
+                  <div>
+                    {workload.mentor_review_time 
+                      ? format(new Date(workload.mentor_review_time), "yyyy年MM月dd日 HH:mm:ss")
+                      : '-'}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>审核评语</Label>
+                <div className="whitespace-pre-wrap rounded-lg border p-4">
+                  {workload.mentor_comment || '暂无评语'}
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* 教师审核信息 */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">教师审核</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>审核人</Label>
+                  <div>{workload.teacher_reviewer?.username || '-'}</div>
+                </div>
+                <div className="space-y-2">
+                  <Label>审核时间</Label>
+                  <div>
+                    {workload.teacher_review_time 
+                      ? format(new Date(workload.teacher_review_time), "yyyy年MM月dd日 HH:mm:ss")
+                      : '-'}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>审核评语</Label>
+                <div className="whitespace-pre-wrap rounded-lg border p-4">
+                  {workload.teacher_comment || '暂无评语'}
+                </div>
               </div>
             </div>
           </CardContent>

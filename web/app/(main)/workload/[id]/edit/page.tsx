@@ -128,8 +128,38 @@ export default function WorkloadEditPage({
 }) {
   const router = useRouter()
   const resolvedParams = use(params)
+  const [workload, setWorkload] = useState<Workload | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isStudent, setIsStudent] = useState(false)
   const [reviewers, setReviewers] = useState<Array<{ id: number; username: string }>>([])
+
+  // 从本地存储获取用户角色
+  useEffect(() => {
+    const userRole = localStorage.getItem('userRole')
+    setIsStudent(userRole === 'student')
+  }, [])
+
+  // 获取审核人列表
+  useEffect(() => {
+    if (!isStudent) return // 如果不是学生，不需要获取审核人列表
+
+    const fetchReviewers = async () => {
+      try {
+        const response = await api.get("/user/list/")
+        // 筛选出导师角色的用户
+        const mentors = response.data.filter((user: any) => user.role === "mentor")
+        setReviewers(mentors)
+      } catch (error) {
+        console.error("获取审核人列表失败:", error)
+        toast.error("获取审核人列表失败", {
+          description: "请刷新页面重试",
+          duration: 3000,
+        })
+      }
+    }
+
+    fetchReviewers()
+  }, [isStudent])
 
   // 初始化表单
   const form = useForm<FormValues>({
@@ -465,36 +495,38 @@ export default function WorkloadEditPage({
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="mentor_reviewer_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>审核导师</FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="请选择审核导师" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {reviewers.map((reviewer) => (
-                                <SelectItem
-                                  key={reviewer.id}
-                                  value={reviewer.id.toString()}
-                                >
-                                  {reviewer.username}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage className="empty:hidden" />
-                        </FormItem>
-                      )}
-                    />
+                    {isStudent && (
+                      <FormField
+                        control={form.control}
+                        name="mentor_reviewer_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>审核导师</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="请选择审核导师" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {reviewers.map((reviewer) => (
+                                  <SelectItem
+                                    key={reviewer.id}
+                                    value={reviewer.id.toString()}
+                                  >
+                                    {reviewer.username}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage className="empty:hidden" />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                   </div>
 
                   <div className="space-y-4">

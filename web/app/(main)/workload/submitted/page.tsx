@@ -95,6 +95,13 @@ export default function WorkloadSubmittedPage() {
   const [filterType, setFilterType] = useState<"status" | "source">("status")
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
   const [selectedSource, setSelectedSource] = useState<string>("all")
+  const [isStudent, setIsStudent] = useState(false)
+
+  // 从本地存储获取用户角色
+  useEffect(() => {
+    const userRole = localStorage.getItem('userRole')
+    setIsStudent(userRole === 'student')
+  }, [])
 
   const fetchWorkloads = async () => {
     try {
@@ -239,7 +246,7 @@ export default function WorkloadSubmittedPage() {
                 <TableHead>结束日期</TableHead>
                 <TableHead>强度类型</TableHead>
                 <TableHead>强度值</TableHead>
-                <TableHead>导师审核人</TableHead>
+                {isStudent && <TableHead>导师审核人</TableHead>}
                 <TableHead>教师审核人</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead className="text-right">操作</TableHead>
@@ -248,13 +255,13 @@ export default function WorkloadSubmittedPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-10">
+                  <TableCell colSpan={isStudent ? 11 : 10} className="text-center py-10">
                     加载中...
                   </TableCell>
                 </TableRow>
               ) : filteredWorkloads.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-10">
+                  <TableCell colSpan={isStudent ? 11 : 10} className="text-center py-10">
                     暂无工作量记录
                   </TableCell>
                 </TableRow>
@@ -268,7 +275,7 @@ export default function WorkloadSubmittedPage() {
                     <TableCell>{format(new Date(workload.end_date), "yyyy年MM月dd日")}</TableCell>
                     <TableCell>{intensityTypeMap[workload.intensity_type]}</TableCell>
                     <TableCell>{workload.intensity_value}</TableCell>
-                    <TableCell>{workload.mentor_reviewer?.username || '-'}</TableCell>
+                    {isStudent && <TableCell>{workload.mentor_reviewer?.username || '-'}</TableCell>}
                     <TableCell>{workload.teacher_reviewer?.username || '-'}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-sm ${
