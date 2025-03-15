@@ -26,6 +26,13 @@ import {
 } from "@/components/ui/alert-dialog"
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 // 工作量来源映射
 const sourceMap = {
@@ -80,6 +87,9 @@ export default function WorkloadSubmittedPage() {
   const [workloads, setWorkloads] = useState<Workload[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [filterType, setFilterType] = useState<"status" | "source">("status")
+  const [selectedStatus, setSelectedStatus] = useState<string>("all")
+  const [selectedSource, setSelectedSource] = useState<string>("all")
 
   const fetchWorkloads = async () => {
     try {
@@ -128,14 +138,81 @@ export default function WorkloadSubmittedPage() {
     return status === "pending" || status.includes("rejected")
   }
 
+  // 筛选工作量列表
+  const filteredWorkloads = workloads.filter((workload) => {
+    if (filterType === "status") {
+      if (selectedStatus === "all") return true
+      return workload.status === selectedStatus
+    } else {
+      if (selectedSource === "all") return true
+      return workload.source === selectedSource
+    }
+  })
+
+  // 获取当前筛选值
+  const getCurrentFilterValue = () => {
+    return filterType === "status" ? selectedStatus : selectedSource
+  }
+
+  // 设置筛选值
+  const handleFilterValueChange = (value: string) => {
+    if (filterType === "status") {
+      setSelectedStatus(value)
+    } else {
+      setSelectedSource(value)
+    }
+  }
+
   return (
     <div className="container mx-auto py-10">
       <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-medium">已提交工作量</h3>
-          <p className="text-sm text-muted-foreground">
-            查看所有已提交的工作量及其审核状态
-          </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-medium">已提交工作量</h3>
+            <p className="text-sm text-muted-foreground">
+              查看所有已提交的工作量及其审核状态
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Select value={filterType} onValueChange={(value: "status" | "source") => setFilterType(value)}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="筛选方式" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="status">按状态</SelectItem>
+                <SelectItem value="source">按来源</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {filterType === "status" ? (
+              <Select value={selectedStatus} onValueChange={handleFilterValueChange}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="选择状态" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部状态</SelectItem>
+                  <SelectItem value="pending">待审核</SelectItem>
+                  <SelectItem value="mentor_approved">导师已审核</SelectItem>
+                  <SelectItem value="teacher_approved">教师已审核</SelectItem>
+                  <SelectItem value="mentor_rejected">导师已驳回</SelectItem>
+                  <SelectItem value="teacher_rejected">教师已驳回</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select value={selectedSource} onValueChange={handleFilterValueChange}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="选择来源" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部来源</SelectItem>
+                  <SelectItem value="horizontal">横向</SelectItem>
+                  <SelectItem value="innovation">大创</SelectItem>
+                  <SelectItem value="hardware">硬件小组</SelectItem>
+                  <SelectItem value="assessment">考核小组</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
         <div className="border rounded-lg">
           <Table>
@@ -160,14 +237,14 @@ export default function WorkloadSubmittedPage() {
                     加载中...
                   </TableCell>
                 </TableRow>
-              ) : workloads.length === 0 ? (
+              ) : filteredWorkloads.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={10} className="text-center py-10">
                     暂无工作量记录
                   </TableCell>
                 </TableRow>
               ) : (
-                workloads.map((workload) => (
+                filteredWorkloads.map((workload) => (
                   <TableRow key={workload.id}>
                     <TableCell>{workload.name}</TableCell>
                     <TableCell>{sourceMap[workload.source]}</TableCell>
