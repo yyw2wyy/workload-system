@@ -54,11 +54,16 @@ type Workload = {
   intensity_value: number
   image_path: string | null
   file_path: string | null
-  reviewer: {
+  mentor_reviewer: {
     id: number
     username: string
     role: string
-  }
+  } | null
+  teacher_reviewer: {
+    id: number
+    username: string
+    role: string
+  } | null
   status: keyof typeof statusMap
   mentor_comment?: string
   teacher_comment?: string
@@ -241,9 +246,15 @@ export default function WorkloadDetailPage({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>审核人</Label>
-                <div>{workload.reviewer.username}</div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>导师审核人</Label>
+                  <div>{workload.mentor_reviewer?.username || '-'}</div>
+                </div>
+                <div className="space-y-2">
+                  <Label>教师审核人</Label>
+                  <div>{workload.teacher_reviewer?.username || '-'}</div>
+                </div>
               </div>
 
               {workload.mentor_comment && (

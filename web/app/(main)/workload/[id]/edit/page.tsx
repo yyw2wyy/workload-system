@@ -26,9 +26,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DatePicker, ConfigProvider } from "antd"
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
+import dayjs from "dayjs"
+import zhCN from "antd/locale/zh_CN"
+import "dayjs/locale/zh-cn"
+import "antd/dist/reset.css"
 
 // 工作量来源选项
 const sourceOptions = [
@@ -75,7 +79,7 @@ const formSchema = z
       .number()
       .min(0.1, "工作强度必须大于0")
       .max(24, "工作强度不能超过24"),
-    reviewer_id: z.string().min(1, "请选择审核人"),
+    mentor_reviewer_id: z.string().min(1, "请选择审核导师"),
     image: z.any().optional(),
     file: z.any().optional(),
   })
@@ -104,11 +108,16 @@ type Workload = {
   intensity_value: number
   image_path: string | null
   file_path: string | null
-  reviewer: {
+  mentor_reviewer: {
     id: number
     username: string
     role: string
-  }
+  } | null
+  teacher_reviewer: {
+    id: number
+    username: string
+    role: string
+  } | null
   status: string
 }
 
@@ -132,7 +141,7 @@ export default function WorkloadEditPage({
       work_type: "remote",
       intensity_type: "total",
       intensity_value: 1,
-      reviewer_id: "",
+      mentor_reviewer_id: "",
     },
   })
 
@@ -160,7 +169,7 @@ export default function WorkloadEditPage({
           end_date: new Date(workload.end_date),
           intensity_type: workload.intensity_type,
           intensity_value: workload.intensity_value,
-          reviewer_id: workload.reviewer.id.toString(),
+          mentor_reviewer_id: workload.mentor_reviewer?.id.toString() || "",
         })
       } catch (error: any) {
         console.error("获取数据失败:", error)
@@ -196,7 +205,7 @@ export default function WorkloadEditPage({
       formData.append("end_date", format(values.end_date, "yyyy-MM-dd"))
       formData.append("intensity_type", values.intensity_type)
       formData.append("intensity_value", values.intensity_value.toString())
-      formData.append("reviewer_id", values.reviewer_id)
+      formData.append("mentor_reviewer_id", values.mentor_reviewer_id)
 
       // 添加文件（如果有）
       if (values.image instanceof File) {
@@ -240,297 +249,315 @@ export default function WorkloadEditPage({
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push("/workload/submitted")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h3 className="text-lg font-medium">编辑工作量</h3>
+    <ConfigProvider locale={zhCN}>
+      <div className="container mx-auto py-10">
+        <div className="space-y-6">
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push("/workload/submitted")}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h3 className="text-lg font-medium">编辑工作量</h3>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>工作量信息</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>工作量名称</FormLabel>
+                        <FormControl>
+                          <Input placeholder="请输入工作量名称" {...field} />
+                        </FormControl>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>工作内容</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="请输入工作内容"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="source"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>工作量来源</FormLabel>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="请选择工作量来源" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {sourceOptions.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage className="empty:hidden" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="work_type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>工作类型</FormLabel>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="请选择工作类型" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {typeOptions.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage className="empty:hidden" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="start_date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>开始日期</FormLabel>
+                          <FormControl>
+                            <DatePicker
+                              className="w-full"
+                              placeholder="选择日期"
+                              format="YYYY年MM月DD日"
+                              value={field.value ? dayjs(field.value) : null}
+                              onChange={(date) => {
+                                field.onChange(date ? date.toDate() : null)
+                              }}
+                              disabledDate={(current) => {
+                                return current && (current > dayjs() || current < dayjs("1900-01-01"))
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage className="empty:hidden" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="end_date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>结束日期</FormLabel>
+                          <FormControl>
+                            <DatePicker
+                              className="w-full"
+                              placeholder="选择日期"
+                              format="YYYY年MM月DD日"
+                              value={field.value ? dayjs(field.value) : null}
+                              onChange={(date) => {
+                                field.onChange(date ? date.toDate() : null)
+                              }}
+                              disabledDate={(current) => {
+                                return current && (current > dayjs() || current < dayjs("1900-01-01"))
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage className="empty:hidden" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="intensity_type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>工作强度类型</FormLabel>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="请选择工作强度类型" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {intensityTypeOptions.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage className="empty:hidden" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="intensity_value"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>工作强度值</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.1"
+                              placeholder="请输入工作强度值"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage className="empty:hidden" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="mentor_reviewer_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>审核导师</FormLabel>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="请选择审核导师" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {reviewers.map((reviewer) => (
+                                <SelectItem
+                                  key={reviewer.id}
+                                  value={reviewer.id.toString()}
+                                >
+                                  {reviewer.username}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage className="empty:hidden" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="image"
+                      render={({ field: { value, onChange, ...field } }) => (
+                        <FormItem>
+                          <FormLabel>图片上传</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                onChange(file)
+                              }}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage className="empty:hidden" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="file"
+                      render={({ field: { value, onChange, ...field } }) => (
+                        <FormItem>
+                          <FormLabel>文件上传</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="file"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                onChange(file)
+                              }}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage className="empty:hidden" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => router.push("/workload/submitted")}
+                    >
+                      取消
+                    </Button>
+                    <Button type="submit">保存修改</Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>工作量信息</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>工作量名称</FormLabel>
-                      <FormControl>
-                        <Input placeholder="请输入工作量名称" {...field} />
-                      </FormControl>
-                      <FormMessage className="empty:hidden" />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>工作内容</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="请输入工作内容"
-                          className="min-h-[100px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage className="empty:hidden" />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="source"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>工作量来源</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="请选择工作量来源" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {sourceOptions.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="work_type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>工作类型</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="请选择工作类型" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {typeOptions.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="start_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>开始日期</FormLabel>
-                        <FormControl>
-                          <DatePicker
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="end_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>结束日期</FormLabel>
-                        <FormControl>
-                          <DatePicker
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="intensity_type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>工作强度类型</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="请选择工作强度类型" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {intensityTypeOptions.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="intensity_value"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>工作强度值</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.1"
-                            placeholder="请输入工作强度值"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="reviewer_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>审核人</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="请选择审核人" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {reviewers.map((reviewer) => (
-                              <SelectItem
-                                key={reviewer.id}
-                                value={reviewer.id.toString()}
-                              >
-                                {reviewer.username}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="image"
-                    render={({ field: { value, onChange, ...field } }) => (
-                      <FormItem>
-                        <FormLabel>图片上传</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0]
-                              onChange(file)
-                            }}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="file"
-                    render={({ field: { value, onChange, ...field } }) => (
-                      <FormItem>
-                        <FormLabel>文件上传</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="file"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0]
-                              onChange(file)
-                            }}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.push("/workload/submitted")}
-                  >
-                    取消
-                  </Button>
-                  <Button type="submit">保存修改</Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
       </div>
-    </div>
+    </ConfigProvider>
   )
 } 

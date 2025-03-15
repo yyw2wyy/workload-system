@@ -13,8 +13,8 @@
 
 - `pending`: 待审核
 - `mentor_approved`: 导师已审核
-- `teacher_approved`: 教师已审核
 - `mentor_rejected`: 导师已驳回
+- `teacher_approved`: 教师已审核
 - `teacher_rejected`: 教师已驳回
 
 ### 工作来源
@@ -57,7 +57,7 @@
 | intensity_value| float   | 是   | 工作强度值                                    |
 | image_path     | string  | 否   | 图片路径                                      |
 | file_path      | string  | 否   | 文件路径                                      |
-| reviewer_id    | integer | 是   | 审核者ID（学生选择导师，导师选择教师）         |
+| mentor_reviewer_id | integer | 条件 | 导师审核人ID（仅学生提交时必填）             |
 
 #### 响应示例
 
@@ -79,14 +79,17 @@
         "username": "student1",
         "role": "student"
     },
-    "reviewer": {
+    "mentor_reviewer": {
         "id": 2,
         "username": "mentor1",
         "role": "mentor"
     },
+    "teacher_reviewer": null,
     "status": "pending",
     "mentor_comment": null,
+    "mentor_review_time": null,
     "teacher_comment": null,
+    "teacher_review_time": null,
     "created_at": "2025-03-13T06:00:00Z",
     "updated_at": "2025-03-13T06:00:00Z"
 }
@@ -105,11 +108,6 @@
     {
         "id": 1,
         "name": "项目开发",
-        // ... 其他字段与单个工作量响应相同
-    },
-    {
-        "id": 2,
-        "name": "项目测试",
         // ... 其他字段与单个工作量响应相同
     }
 ]
@@ -153,8 +151,8 @@
 - **权限要求**: 已登录的导师或教师
 
 #### 响应说明
-- 导师：获取分配给自己审核的、状态为待审核的学生工作量
-- 教师：获取分配给自己审核的所有待审核工作量（包括学生的待审核和导师已审核的工作量）
+- 导师：获取指定自己为审核导师的、状态为待审核的学生工作量
+- 教师：获取所有待审核的工作量（包括导师提交的待审核工作量和学生提交的导师已审核工作量）
 
 #### 响应示例
 
@@ -183,7 +181,8 @@
         "id": 1,
         "name": "项目开发",
         // ... 其他字段与工作量响应格式相同
-        "status": "mentor_approved"
+        "status": "mentor_approved",
+        "mentor_review_time": "2025-03-14T10:00:00Z"
     }
 ]
 ```
@@ -210,7 +209,7 @@
 
 - **接口URL**: `/api/workload/{id}/review/`
 - **请求方法**: POST
-- **权限要求**: 已登录的导师或教师（必须是该工作量的指定审核者）
+- **权限要求**: 已登录的导师或教师
 
 #### 请求参数
 
@@ -229,22 +228,38 @@
     // ... 其他字段与工作量响应格式相同
     "status": "mentor_approved",
     "mentor_comment": "工作完成得很好",
-    "teacher_comment": null
+    "mentor_review_time": "2025-03-14T10:00:00Z",
+    "teacher_comment": null,
+    "teacher_review_time": null
 }
 ```
 
 ## 审核规则说明
 
-1. 导师审核规则：
-   - 只能审核分配给自己的学生工作量
+1. 学生提交规则：
+   - 必须指定导师作为审核人
+   - 工作量需要先经过导师审核，再由教师审核
+
+2. 导师提交规则：
+   - 不需要指定审核人
+   - 工作量可以直接由任意教师审核
+
+3. 导师审核规则：
+   - 只能审核指定自己为审核导师的学生工作量
    - 只能将状态设置为"导师已审核"或"导师已驳回"
    - 必须填写导师评论
+   - 系统会自动记录审核时间
 
-2. 教师审核规则：
-   - 可以审核所有分配给自己的工作量
+4. 教师审核规则：
+   - 可以审核所有导师提交的工作量
    - 对于学生工作量，必须等待导师审核通过后才能审核
    - 只能将状态设置为"教师已审核"或"教师已驳回"
    - 必须填写教师评论
+   - 系统会自动记录审核人和审核时间
+
+5. 工作量修改/删除规则：
+   - 只能修改/删除状态为"待审核"、"导师已驳回"或"教师已驳回"的工作量
+   - 一旦工作量被审核通过，将无法修改或删除
 
 ## 错误响应
 

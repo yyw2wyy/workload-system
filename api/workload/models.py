@@ -32,8 +32,8 @@ class Workload(models.Model):
     STATUS_CHOICES = (
         ('pending', '待审核'),
         ('mentor_approved', '导师已审核'),
-        ('teacher_approved', '教师已审核'),
         ('mentor_rejected', '导师已驳回'),
+        ('teacher_approved', '教师已审核'),
         ('teacher_rejected', '教师已驳回'),
     )
     
@@ -60,11 +60,21 @@ class Workload(models.Model):
         related_name='submitted_workloads',
         verbose_name='提交者'
     )
-    reviewer = models.ForeignKey(
+    mentor_reviewer = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
-        related_name='reviewing_workloads',
-        verbose_name='审核者'
+        on_delete=models.SET_NULL,
+        related_name='mentor_reviewing_workloads',
+        verbose_name='导师审核人',
+        null=True,
+        blank=True
+    )
+    teacher_reviewer = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='teacher_reviewing_workloads',
+        verbose_name='教师审核人',
+        null=True,
+        blank=True
     )
     
     # 审核信息
@@ -76,6 +86,8 @@ class Workload(models.Model):
     )
     mentor_comment = models.TextField('导师评论', blank=True, null=True)
     teacher_comment = models.TextField('教师评论', blank=True, null=True)
+    mentor_review_time = models.DateTimeField('导师审核时间', null=True, blank=True)
+    teacher_review_time = models.DateTimeField('教师审核时间', null=True, blank=True)
     
     # 时间戳
     created_at = models.DateTimeField('创建时间', auto_now_add=True)
@@ -96,7 +108,11 @@ class Workload(models.Model):
             raise ValidationError('结束日期不能早于开始日期')
         
         # 验证审核者角色
-        if self.submitter.role == 'student' and self.reviewer.role != 'mentor':
-            raise ValidationError('学生提交的工作量必须由导师审核')
-        elif self.submitter.role == 'mentor' and self.reviewer.role != 'teacher':
-            raise ValidationError('导师提交的工作量必须由教师审核')
+        if self.submitter.role == 'student':
+            if not self.mentor_reviewer:
+                raise ValidationError('学生提交的工作量必须指定导师审核人')
+            if self.mentor_reviewer and self.mentor_reviewer.role != 'mentor':
+                raise ValidationError('导师审核人必须是导师角色')
+        
+        if self.teacher_reviewer and self.teacher_reviewer.role != 'teacher':
+            raise ValidationError('教师审核人必须是教师角色')

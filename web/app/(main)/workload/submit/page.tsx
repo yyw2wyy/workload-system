@@ -57,7 +57,7 @@ const workloadFormSchema = z.object({
   intensityValue: z.string().min(1, "请输入工作强度值"),
   image_path: z.any().optional(),
   file_path: z.any().optional(),
-  reviewer: z.string().min(1, "请选择审核人"),
+  mentor_reviewer: z.string().min(1, "请选择审核导师"),
 }).refine((data) => {
   if (!data.startDate || !data.endDate) return true
   return data.endDate >= data.startDate
@@ -75,7 +75,7 @@ const defaultValues: Partial<WorkloadFormValues> = {
   type: "",
   intensityType: "",
   intensityValue: "",
-  reviewer: "",
+  mentor_reviewer: "",
 }
 
 const sourceOptions = [
@@ -147,7 +147,7 @@ export default function WorkloadSubmitPage() {
       formData.append("end_date", format(data.endDate, "yyyy-MM-dd"))
       formData.append("intensity_type", data.intensityType)
       formData.append("intensity_value", data.intensityValue)
-      formData.append("reviewer_id", data.reviewer)
+      formData.append("mentor_reviewer_id", data.mentor_reviewer)
 
       // 添加文件（如果有）
       if (data.image_path) {
@@ -427,14 +427,14 @@ export default function WorkloadSubmitPage() {
               </div>
               <FormField
                 control={form.control}
-                name="reviewer"
+                name="mentor_reviewer"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>审核人</FormLabel>
+                    <FormLabel>审核导师</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="请选择审核人" />
+                          <SelectValue placeholder="请选择审核导师" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

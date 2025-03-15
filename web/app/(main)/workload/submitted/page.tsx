@@ -74,11 +74,16 @@ type Workload = {
   end_date: string
   intensity_type: keyof typeof intensityTypeMap
   intensity_value: number
-  reviewer: {
+  mentor_reviewer: {
     id: number
     username: string
     role: string
-  }
+  } | null
+  teacher_reviewer: {
+    id: number
+    username: string
+    role: string
+  } | null
   status: keyof typeof statusMap
 }
 
@@ -104,9 +109,18 @@ export default function WorkloadSubmittedPage() {
         router.push("/login")
         return
       }
+
+      // 如果是服务器错误，显示详细错误信息
+      if (error.response?.status === 500) {
+        toast.error("获取工作量列表失败", {
+          description: "服务器内部错误，请联系管理员",
+          duration: 5000,
+        })
+        return
+      }
       
       toast.error("获取工作量列表失败", {
-        description: "请刷新页面重试",
+        description: error.response?.data?.detail || "请刷新页面重试",
         duration: 3000,
       })
     } finally {
@@ -225,7 +239,8 @@ export default function WorkloadSubmittedPage() {
                 <TableHead>结束日期</TableHead>
                 <TableHead>强度类型</TableHead>
                 <TableHead>强度值</TableHead>
-                <TableHead>审核人</TableHead>
+                <TableHead>导师审核人</TableHead>
+                <TableHead>教师审核人</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
@@ -253,7 +268,8 @@ export default function WorkloadSubmittedPage() {
                     <TableCell>{format(new Date(workload.end_date), "yyyy年MM月dd日")}</TableCell>
                     <TableCell>{intensityTypeMap[workload.intensity_type]}</TableCell>
                     <TableCell>{workload.intensity_value}</TableCell>
-                    <TableCell>{workload.reviewer.username}</TableCell>
+                    <TableCell>{workload.mentor_reviewer?.username || '-'}</TableCell>
+                    <TableCell>{workload.teacher_reviewer?.username || '-'}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-sm ${
                         workload.status.includes("approved") 

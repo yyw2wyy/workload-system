@@ -20,13 +20,11 @@ class WorkloadViewSet(viewsets.ModelViewSet):
             # 学生只能看到自己提交的工作量
             return Workload.objects.filter(submitter=user)
         elif user.role == 'mentor':
-            # 导师可以看到自己提交的和需要审核的工作量
-            return Workload.objects.filter(
-                Q(submitter=user) | Q(reviewer=user, submitter__role='student', status='pending')
-            )
+            # 导师只能看到自己提交的工作量
+            return Workload.objects.filter(submitter=user)
         elif user.role == 'teacher':
-            # 教师可以看到所有工作量
-            return Workload.objects.all()
+            # 教师只能看到自己提交的工作量
+            return Workload.objects.filter(submitter=user)
         return Workload.objects.none()
 
     def perform_create(self, serializer):
