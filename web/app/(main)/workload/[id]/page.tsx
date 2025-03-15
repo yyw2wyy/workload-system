@@ -275,32 +275,36 @@ export default function WorkloadDetailPage({
               </div>
             </div>
 
-            <Separator />
+            {isStudent && (
+              <>
+                <Separator />
 
-            {/* 导师审核信息 */}
-            <div className="space-y-4">
-              <Label className="text-base font-semibold">导师审核</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>审核人</Label>
-                  <div>{workload.mentor_reviewer?.username || '-'}</div>
-                </div>
-                <div className="space-y-2">
-                  <Label>审核时间</Label>
-                  <div>
-                    {workload.mentor_review_time 
-                      ? format(new Date(workload.mentor_review_time), "yyyy年MM月dd日 HH:mm:ss")
-                      : '-'}
+                {/* 导师审核信息 */}
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold">导师审核</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>审核人</Label>
+                      <div>{workload.mentor_reviewer?.username || '-'}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>审核时间</Label>
+                      <div>
+                        {workload.mentor_review_time 
+                          ? format(new Date(workload.mentor_review_time), "yyyy年MM月dd日 HH:mm:ss")
+                          : '-'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>审核评语</Label>
+                    <div className="whitespace-pre-wrap rounded-lg border p-4">
+                      {workload.mentor_comment || '暂无评语'}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>审核评语</Label>
-                <div className="whitespace-pre-wrap rounded-lg border p-4">
-                  {workload.mentor_comment || '暂无评语'}
-                </div>
-              </div>
-            </div>
+              </>
+            )}
 
             <Separator />
 
