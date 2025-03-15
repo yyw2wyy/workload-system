@@ -79,19 +79,30 @@ const formSchema = z
       .number()
       .min(0.1, "工作强度必须大于0")
       .max(24, "工作强度不能超过24"),
-    mentor_reviewer_id: z.string().min(1, "请选择审核导师"),
+    mentor_reviewer_id: z.string().optional(),
     image: z.any().optional(),
     file: z.any().optional(),
   })
-  .refine(
-    (data) => {
-      return data.end_date >= data.start_date
-    },
-    {
-      message: "结束日期不能早于开始日期",
-      path: ["end_date"],
+  .superRefine((data, ctx) => {
+    // 验证结束日期不早于开始日期
+    if (data.end_date < data.start_date) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "结束日期不能早于开始日期",
+        path: ["end_date"],
+      });
     }
-  )
+
+    // 如果是学生，则必须选择导师
+    const userRole = localStorage.getItem('userRole');
+    if (userRole === 'student' && !data.mentor_reviewer_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "请选择审核导师",
+        path: ["mentor_reviewer_id"],
+      });
+    }
+  });
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -235,7 +246,11 @@ export default function WorkloadEditPage({
       formData.append("end_date", format(values.end_date, "yyyy-MM-dd"))
       formData.append("intensity_type", values.intensity_type)
       formData.append("intensity_value", values.intensity_value.toString())
-      formData.append("mentor_reviewer_id", values.mentor_reviewer_id)
+      
+      // 只有学生才需要提交 mentor_reviewer_id
+      if (isStudent && values.mentor_reviewer_id) {
+        formData.append("mentor_reviewer_id", values.mentor_reviewer_id)
+      }
 
       // 添加文件（如果有）
       if (values.image instanceof File) {
