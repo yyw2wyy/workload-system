@@ -13,7 +13,6 @@
 
 - `pending`: 待审核
 - `mentor_approved`: 导师已审核
-- `mentor_rejected`: 导师已驳回
 - `teacher_approved`: 教师已审核
 - `teacher_rejected`: 教师已驳回
 
@@ -37,7 +36,68 @@
 
 ## API接口
 
-### 1. 提交工作量
+### 1. 获取工作量列表
+
+- **接口URL**: `/api/workload/`
+- **请求方法**: GET
+- **权限要求**: 已登录用户
+
+#### 查询参数
+
+| 参数名    | 类型    | 必填 | 说明                                          |
+|----------|---------|------|----------------------------------------------|
+| submitted| boolean | 否   | 是否只获取自己提交的工作量，默认为false         |
+
+#### 响应说明
+根据用户角色和查询参数返回不同的工作量列表：
+
+1. 当 `submitted=true` 时：
+   - 返回用户自己提交的所有工作量
+
+2. 当 `submitted=false` 或未指定时：
+   - 学生：只能看到自己提交的工作量
+   - 导师：可以看到自己提交的工作量和需要自己审核的学生工作量
+   - 教师：可以看到自己提交的工作量、导师已审核的工作量和导师提交的待审核工作量
+
+#### 响应示例
+
+```json
+[
+    {
+        "id": 1,
+        "name": "项目开发",
+        "content": "开发新功能模块",
+        "source": "horizontal",
+        "work_type": "remote",
+        "start_date": "2025-03-01",
+        "end_date": "2025-03-15",
+        "intensity_type": "daily",
+        "intensity_value": 8.0,
+        "image_path": "path/to/image.jpg",
+        "file_path": "path/to/file.pdf",
+        "submitter": {
+            "id": 1,
+            "username": "student1",
+            "role": "student"
+        },
+        "mentor_reviewer": {
+            "id": 2,
+            "username": "mentor1",
+            "role": "mentor"
+        },
+        "teacher_reviewer": null,
+        "status": "pending",
+        "mentor_comment": null,
+        "mentor_review_time": null,
+        "teacher_comment": null,
+        "teacher_review_time": null,
+        "created_at": "2025-03-13T06:00:00Z",
+        "updated_at": "2025-03-13T06:00:00Z"
+    }
+]
+```
+
+### 2. 提交工作量
 
 - **接口URL**: `/api/workload/`
 - **请求方法**: POST
@@ -59,90 +119,38 @@
 | file_path      | string  | 否   | 文件路径                                      |
 | mentor_reviewer_id | integer | 条件 | 导师审核人ID（仅学生提交时必填）             |
 
-#### 响应示例
-
-```json
-{
-    "id": 1,
-    "name": "项目开发",
-    "content": "开发新功能模块",
-    "source": "horizontal",
-    "work_type": "remote",
-    "start_date": "2025-03-01",
-    "end_date": "2025-03-15",
-    "intensity_type": "daily",
-    "intensity_value": 8.0,
-    "image_path": "path/to/image.jpg",
-    "file_path": "path/to/file.pdf",
-    "submitter": {
-        "id": 1,
-        "username": "student1",
-        "role": "student"
-    },
-    "mentor_reviewer": {
-        "id": 2,
-        "username": "mentor1",
-        "role": "mentor"
-    },
-    "teacher_reviewer": null,
-    "status": "pending",
-    "mentor_comment": null,
-    "mentor_review_time": null,
-    "teacher_comment": null,
-    "teacher_review_time": null,
-    "created_at": "2025-03-13T06:00:00Z",
-    "updated_at": "2025-03-13T06:00:00Z"
-}
-```
-
-### 2. 获取自己提交的工作量列表
-
-- **接口URL**: `/api/workload/`
-- **请求方法**: GET
-- **权限要求**: 已登录的学生或导师
-
-#### 响应示例
-
-```json
-[
-    {
-        "id": 1,
-        "name": "项目开发",
-        // ... 其他字段与单个工作量响应相同
-    }
-]
-```
-
 ### 3. 获取单个工作量详情
 
 - **接口URL**: `/api/workload/{id}/`
 - **请求方法**: GET
-- **权限要求**: 已登录的学生或导师（只能查看自己提交的工作量）
+- **权限要求**: 已登录用户（需要有查看权限）
 
-#### 响应格式
-与提交工作量的响应格式相同
+#### 访问权限说明
+- 学生：只能查看自己提交的工作量
+- 导师：可以查看自己提交的工作量和指定自己为审核人的工作量
+- 教师：可以查看自己提交的工作量、导师已审核的工作量和导师提交的待审核工作量
 
 ### 4. 修改工作量
 
 - **接口URL**: `/api/workload/{id}/`
 - **请求方法**: PUT/PATCH
-- **权限要求**: 已登录的学生或导师（只能修改自己提交的且状态为未审核或审核未通过的工作量）
+- **权限要求**: 已登录用户（需要有修改权限）
 
-#### 请求参数
-与提交工作量的请求参数相同，但所有字段都是可选的（PATCH方法）
-
-#### 响应格式
-与提交工作量的响应格式相同
+#### 修改权限说明
+- 只能修改自己提交的工作量
+- 只能修改状态为"待审核"或"已驳回"的工作量
+- 一旦工作量被审核通过，将无法修改
 
 ### 5. 删除工作量
 
 - **接口URL**: `/api/workload/{id}/`
 - **请求方法**: DELETE
-- **权限要求**: 已登录的学生或导师（只能删除自己提交的且状态为未审核或审核未通过的工作量）
+- **权限要求**: 已登录用户（需要有删除权限）
 
-#### 响应
-- 成功：HTTP状态码 204 No Content
-- 失败：HTTP状态码 403 Forbidden（如果尝试删除已审核的工作量）
+#### 删除权限说明
+- 只能删除自己提交的工作量
+- 只能删除状态为"待审核"或"已驳回"的工作量
+- 一旦工作量被审核通过，将无法删除
 
 ### 6. 获取待审核工作量列表
 
@@ -152,60 +160,18 @@
 
 #### 响应说明
 - 导师：获取指定自己为审核导师的、状态为待审核的学生工作量
-- 教师：获取所有待审核的工作量（包括导师提交的待审核工作量和学生提交的导师已审核工作量）
+- 教师：获取所有待教师审核的工作量（包括导师已审核的学生工作量和导师提交的待审核工作量）
 
-#### 响应示例
-
-```json
-[
-    {
-        "id": 1,
-        "name": "项目开发",
-        // ... 其他字段与工作量响应格式相同
-        "status": "pending"
-    }
-]
-```
-
-### 7. 获取已审核工作量列表（仅导师）
+### 7. 获取已审核工作量列表
 
 - **接口URL**: `/api/workload/reviewed/`
 - **请求方法**: GET
 - **权限要求**: 已登录的导师
 
-#### 响应示例
+#### 响应说明
+- 只返回导师已审核的学生工作量（不包括待审核和教师已审核的工作量）
 
-```json
-[
-    {
-        "id": 1,
-        "name": "项目开发",
-        // ... 其他字段与工作量响应格式相同
-        "status": "mentor_approved",
-        "mentor_review_time": "2025-03-14T10:00:00Z"
-    }
-]
-```
-
-### 8. 获取所有工作量列表（仅教师）
-
-- **接口URL**: `/api/workload/all_workloads/`
-- **请求方法**: GET
-- **权限要求**: 已登录的教师
-
-#### 响应示例
-
-```json
-[
-    {
-        "id": 1,
-        "name": "项目开发",
-        // ... 其他字段与工作量响应格式相同
-    }
-]
-```
-
-### 9. 审核工作量
+### 8. 审核工作量
 
 - **接口URL**: `/api/workload/{id}/review/`
 - **请求方法**: POST
@@ -218,21 +184,6 @@
 | status         | string  | 是   | 审核状态（导师：mentor_approved/mentor_rejected；教师：teacher_approved/teacher_rejected）|
 | mentor_comment | string  | 条件 | 导师审核评论（导师审核时必填）                  |
 | teacher_comment| string  | 条件 | 教师审核评论（教师审核时必填）                  |
-
-#### 响应示例
-
-```json
-{
-    "id": 1,
-    "name": "项目开发",
-    // ... 其他字段与工作量响应格式相同
-    "status": "mentor_approved",
-    "mentor_comment": "工作完成得很好",
-    "mentor_review_time": "2025-03-14T10:00:00Z",
-    "teacher_comment": null,
-    "teacher_review_time": null
-}
-```
 
 ## 审核规则说明
 
@@ -255,7 +206,7 @@
    - 对于学生工作量，必须等待导师审核通过后才能审核
    - 只能将状态设置为"教师已审核"或"教师已驳回"
    - 必须填写教师评论
-   - 系统会自动记录审核人和审核时间
+   - 系统会自动记录审核时间
 
 5. 工作量修改/删除规则：
    - 只能修改/删除状态为"待审核"、"导师已驳回"或"教师已驳回"的工作量

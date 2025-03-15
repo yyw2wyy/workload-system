@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, use } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
@@ -89,7 +89,8 @@ type Workload = {
   created_at: string
 }
 
-export default function WorkloadReviewPage({ params }: { params: { id: string } }) {
+export default function WorkloadReviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const router = useRouter()
   const { user } = useAuthStore()
   const [workload, setWorkload] = useState<Workload | null>(null)
@@ -103,7 +104,7 @@ export default function WorkloadReviewPage({ params }: { params: { id: string } 
     const fetchWorkload = async () => {
       try {
         setIsLoading(true)
-        const response = await api.get(`/workload/${params.id}/`)
+        const response = await api.get(`/workload/${id}/`)
         setWorkload(response.data)
       } catch (error: any) {
         console.error("获取工作量详情失败:", error)
@@ -123,7 +124,7 @@ export default function WorkloadReviewPage({ params }: { params: { id: string } 
     }
 
     fetchWorkload()
-  }, [params.id, router])
+  }, [id, router])
 
   // 提交审核
   const handleSubmit = async () => {
@@ -138,7 +139,7 @@ export default function WorkloadReviewPage({ params }: { params: { id: string } 
         ? `mentor_${reviewStatus}` 
         : `teacher_${reviewStatus}`
 
-      const response = await api.post(`/workload/${params.id}/review/`, {
+      const response = await api.post(`/workload/${id}/review/`, {
         status,
         [user?.role === "mentor" ? "mentor_comment" : "teacher_comment"]: comment
       })
@@ -180,8 +181,17 @@ export default function WorkloadReviewPage({ params }: { params: { id: string } 
 
       {/* 工作量详情卡片 */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>工作量详情</CardTitle>
+          {(user?.role === "mentor" || user?.role === "teacher") && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/workload/${id}/edit?returnUrl=/workload/review/${id}`)}
+            >
+              编辑工作量
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-2 gap-4">

@@ -134,11 +134,14 @@ type Workload = {
 
 export default function WorkloadEditPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ returnUrl?: string }>
 }) {
   const router = useRouter()
   const resolvedParams = use(params)
+  const resolvedSearchParams = use(searchParams)
   const [workload, setWorkload] = useState<Workload | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isStudent, setIsStudent] = useState(false)
@@ -253,11 +256,11 @@ export default function WorkloadEditPage({
       }
 
       // 添加文件（如果有）
-      if (values.image instanceof File) {
-        formData.append("image", values.image)
+      if (values.image?.[0]) {
+        formData.append("image", values.image[0])
       }
-      if (values.file instanceof File) {
-        formData.append("file", values.file)
+      if (values.file?.[0]) {
+        formData.append("file", values.file[0])
       }
 
       await api.put(`/workload/${resolvedParams.id}/`, formData, {
@@ -266,12 +269,19 @@ export default function WorkloadEditPage({
         },
       })
 
-      toast.success("修改成功")
-      router.push("/workload/submitted")
+      toast.success("保存成功")
+      
+      // 如果有returnUrl参数，则返回到指定页面，否则返回到已提交工作量页面
+      if (resolvedSearchParams.returnUrl) {
+        router.push(resolvedSearchParams.returnUrl)
+      } else {
+        router.push("/workload/submitted")
+      }
     } catch (error: any) {
-      console.error("修改失败:", error)
-      toast.error("修改失败", {
+      console.error("保存失败:", error)
+      toast.error("保存失败", {
         description: error.response?.data?.detail || "请稍后重试",
+        duration: 3000,
       })
     }
   }
@@ -283,7 +293,13 @@ export default function WorkloadEditPage({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push("/workload/submitted")}
+            onClick={() => {
+              if (resolvedSearchParams.returnUrl) {
+                router.push(resolvedSearchParams.returnUrl)
+              } else {
+                router.push("/workload/submitted")
+              }
+            }}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -301,7 +317,13 @@ export default function WorkloadEditPage({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => router.push("/workload/submitted")}
+              onClick={() => {
+                if (resolvedSearchParams.returnUrl) {
+                  router.push(resolvedSearchParams.returnUrl)
+                } else {
+                  router.push("/workload/submitted")
+                }
+              }}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -593,7 +615,13 @@ export default function WorkloadEditPage({
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => router.push("/workload/submitted")}
+                      onClick={() => {
+                        if (resolvedSearchParams.returnUrl) {
+                          router.push(resolvedSearchParams.returnUrl)
+                        } else {
+                          router.push("/workload/submitted")
+                        }
+                      }}
                     >
                       取消
                     </Button>
