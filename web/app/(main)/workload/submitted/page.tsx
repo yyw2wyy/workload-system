@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useAuthStore } from "@/lib/store/auth"
 
 // 工作量来源映射
 const sourceMap = {
@@ -89,6 +90,7 @@ type Workload = {
 
 export default function WorkloadSubmittedPage() {
   const router = useRouter()
+  const { user } = useAuthStore()
   const [workloads, setWorkloads] = useState<Workload[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<number | null>(null)
@@ -105,19 +107,21 @@ export default function WorkloadSubmittedPage() {
 
   const fetchWorkloads = async () => {
     try {
-      const response = await api.get("/workload/")
+      const response = await api.get("/workload/", {
+        params: {
+          submitted: true
+        }
+      })
       setWorkloads(response.data)
       setIsLoading(false)
     } catch (error: any) {
       console.error("获取工作量列表失败:", error)
       
-      // 如果是未认证错误，重定向到登录页面
       if (error.response?.status === 401) {
         router.push("/login")
         return
       }
 
-      // 如果是服务器错误，显示详细错误信息
       if (error.response?.status === 500) {
         toast.error("获取工作量列表失败", {
           description: "服务器内部错误，请联系管理员",

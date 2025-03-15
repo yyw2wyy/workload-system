@@ -16,15 +16,29 @@ class WorkloadViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """获取用户可以访问的工作量列表"""
         user = self.request.user
+        submitted = self.request.query_params.get('submitted', 'false').lower() == 'true'
+
+        # 如果是获取已提交的工作量列表，只返回自己提交的
+        if submitted:
+            return Workload.objects.filter(submitter=user)
+
+        # 否则根据角色返回可访问的工作量
         if user.role == 'student':
             # 学生只能看到自己提交的工作量
             return Workload.objects.filter(submitter=user)
         elif user.role == 'mentor':
-            # 导师只能看到自己提交的工作量
-            return Workload.objects.filter(submitter=user)
+            # 导师可以看到：1.自己提交的工作量 2.自己需要审核的学生工作量
+            return Workload.objects.filter(
+                Q(submitter=user) |  # 自己提交的
+                Q(mentor_reviewer=user, submitter__role='student')  # 需要审核的学生工作量
+            )
         elif user.role == 'teacher':
-            # 教师只能看到自己提交的工作量
-            return Workload.objects.filter(submitter=user)
+            # 教师可以看到：1.自己提交的工作量 2.所有需要教师审核的工作量
+            return Workload.objects.filter(
+                Q(submitter=user) |  # 自己提交的
+                Q(status='mentor_approved') |  # 导师已审核的工作量
+                Q(submitter__role='mentor', status='pending')  # 导师提交的待审核工作量
+            )
         return Workload.objects.none()
 
     def perform_create(self, serializer):
@@ -57,7 +71,7 @@ class WorkloadViewSet(viewsets.ModelViewSet):
         if user.role == 'mentor':
             # 导师获取自己需要审核的待审核工作量
             queryset = Workload.objects.filter(
-                reviewer=user,
+                mentor_reviewer=user,
                 status='pending',
                 submitter__role='student'
             )
@@ -83,7 +97,7 @@ class WorkloadViewSet(viewsets.ModelViewSet):
         if user.role == 'mentor':
             # 导师获取自己已审核的工作量
             queryset = Workload.objects.filter(
-                reviewer=user,
+                mentor_reviewer=user,
                 submitter__role='student'
             ).exclude(status='pending')
         else:

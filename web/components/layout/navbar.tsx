@@ -16,6 +16,14 @@ const navigation = [
     ],
     roles: ["student", "mentor"], // 只对学生和导师显示
   },
+  {
+    name: "工作量审核",
+    items: [
+      { name: "审核工作量", href: "/workload/review" },
+      { name: "历史审核", href: "/workload/review/history" },
+    ],
+    roles: ["mentor", "teacher"], // 只对导师和教师显示
+  },
 ]
 
 export function Navbar() {
