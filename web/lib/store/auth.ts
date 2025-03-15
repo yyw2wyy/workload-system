@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { api } from '../api'
 import type { LoginCredentials, RegisterCredentials } from '../types/auth'
+import { toast } from 'sonner'
 
 interface User {
   id: string
@@ -26,15 +27,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (credentials) => {
     try {
       const response = await api.post('/user/login/', credentials)
-      const { user } = response.data
-      // 确保所有必要的字段都存在
-      const userData: User = {
-        id: user.id,
-        username: user.username,
-        email: user.email || '',
-        role: user.role || '教师', // 设置默认角色
-      }
-      set({ user: userData })
+      
+      // 保存用户角色到本地存储
+      localStorage.setItem('userRole', credentials.role)
+      
+      set({ user: response.data.user })
+      
+      toast.success("登录成功", {
+        description: "正在跳转到首页...",
+        duration: 3000,
+      })
     } catch (error: any) {
       throw error
     }

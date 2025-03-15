@@ -57,7 +57,7 @@ const workloadFormSchema = z.object({
   intensityValue: z.string().min(1, "请输入工作强度值"),
   image_path: z.any().optional(),
   file_path: z.any().optional(),
-  mentor_reviewer: z.string().min(1, "请选择审核导师"),
+  mentor_reviewer: z.string().optional(),
 }).refine((data) => {
   if (!data.startDate || !data.endDate) return true
   return data.endDate >= data.startDate
@@ -105,6 +105,7 @@ type Reviewer = {
 
 export default function WorkloadSubmitPage() {
   const router = useRouter()
+  const [isStudent, setIsStudent] = useState(false)
   const form = useForm<WorkloadFormValues>({
     resolver: zodResolver(workloadFormSchema),
     defaultValues,
@@ -113,8 +114,16 @@ export default function WorkloadSubmitPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [reviewers, setReviewers] = useState<Reviewer[]>([])
 
+  // 从本地存储获取用户角色
+  useEffect(() => {
+    const userRole = localStorage.getItem('userRole')
+    setIsStudent(userRole === 'student')
+  }, [])
+
   // 获取审核人列表
   useEffect(() => {
+    if (!isStudent) return // 如果不是学生，不需要获取审核人列表
+
     const fetchReviewers = async () => {
       try {
         const response = await api.get("/user/list/")
@@ -131,7 +140,7 @@ export default function WorkloadSubmitPage() {
     }
 
     fetchReviewers()
-  }, [])
+  }, [isStudent])
 
   async function onSubmit(data: WorkloadFormValues) {
     try {
@@ -147,7 +156,11 @@ export default function WorkloadSubmitPage() {
       formData.append("end_date", format(data.endDate, "yyyy-MM-dd"))
       formData.append("intensity_type", data.intensityType)
       formData.append("intensity_value", data.intensityValue)
-      formData.append("mentor_reviewer_id", data.mentor_reviewer)
+      
+      // 只有学生才需要提供审核导师
+      if (isStudent && data.mentor_reviewer) {
+        formData.append("mentor_reviewer_id", data.mentor_reviewer)
+      }
 
       // 添加文件（如果有）
       if (data.image_path) {
@@ -425,33 +438,35 @@ export default function WorkloadSubmitPage() {
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="mentor_reviewer"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>审核导师</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="请选择审核导师" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {reviewers.map((reviewer) => (
-                          <SelectItem 
-                            key={reviewer.id} 
-                            value={reviewer.id.toString()}
-                          >
-                            {reviewer.username}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="empty:hidden" />
-                  </FormItem>
-                )}
-              />
+              {isStudent && (
+                <FormField
+                  control={form.control}
+                  name="mentor_reviewer"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>审核导师</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="请选择审核导师" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {reviewers.map((reviewer) => (
+                            <SelectItem 
+                              key={reviewer.id} 
+                              value={reviewer.id.toString()}
+                            >
+                              {reviewer.username}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="empty:hidden" />
+                    </FormItem>
+                  )}
+                />
+              )}
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
