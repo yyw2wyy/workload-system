@@ -14,6 +14,7 @@ const navigation = [
       { name: "提交工作量", href: "/workload/submit" },
       { name: "已提交工作量", href: "/workload/submitted" },
     ],
+    roles: ["student", "mentor"], // 只对学生和导师显示
   },
 ]
 
@@ -25,6 +26,14 @@ export function Navbar() {
   // 如果用户未登录，不显示导航栏
   if (!user) return null
 
+  // 根据用户角色过滤导航项
+  const filteredNavigation = navigation.filter(item => {
+    // 如果没有指定角色限制，则所有角色都可见
+    if (!item.roles) return true
+    // 如果指定了角色限制，则只对指定角色可见
+    return item.roles.includes(user.role)
+  })
+
   return (
     <div className="fixed inset-y-0 left-0 w-64 bg-white border-r">
       {/* 顶部Logo */}
@@ -32,28 +41,25 @@ export function Navbar() {
         <span className="text-xl font-bold">工作量系统</span>
       </div>
 
-
       {/* 导航菜单 */}
-      <nav className="px-4 py-6">
+      <nav className="px-4 py-4">
         <ul className="space-y-2">
-          {navigation.map((item) => (
+          {filteredNavigation.map((item) => (
             <li key={item.name}>
-              {!item.items ? (
-                <Link
-                  href={item.href}
-                  className={`flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                    pathname === item.href
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-gray-50"
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              ) : (
-                <>
+              {item.items ? (
+                // 有子菜单的项目
+                <div>
                   <button
-                    onClick={() => setExpandedItem(expandedItem === item.name ? null : item.name)}
-                    className="flex items-center justify-between w-full px-2 py-2 text-sm font-medium rounded-md text-muted-foreground hover:bg-gray-50"
+                    className={`w-full flex items-center justify-between px-4 py-2 text-sm rounded-lg hover:bg-gray-100 ${
+                      item.items.some((subItem) => subItem.href === pathname)
+                        ? "bg-gray-100 font-medium"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setExpandedItem(
+                        expandedItem === item.name ? null : item.name
+                      )
+                    }
                   >
                     <span>{item.name}</span>
                     {expandedItem === item.name ? (
@@ -63,15 +69,15 @@ export function Navbar() {
                     )}
                   </button>
                   {expandedItem === item.name && (
-                    <ul className="mt-1 ml-4 space-y-1">
+                    <ul className="pl-4 mt-2 space-y-2">
                       {item.items.map((subItem) => (
-                        <li key={subItem.href}>
+                        <li key={subItem.name}>
                           <Link
                             href={subItem.href}
-                            className={`flex items-center px-2 py-2 text-sm rounded-md ${
+                            className={`block px-4 py-2 text-sm rounded-lg hover:bg-gray-100 ${
                               pathname === subItem.href
-                                ? "bg-primary/10 text-primary"
-                                : "text-muted-foreground hover:bg-gray-50"
+                                ? "bg-gray-100 font-medium"
+                                : ""
                             }`}
                           >
                             {subItem.name}
@@ -80,7 +86,17 @@ export function Navbar() {
                       ))}
                     </ul>
                   )}
-                </>
+                </div>
+              ) : (
+                // 没有子菜单的项目
+                <Link
+                  href={item.href}
+                  className={`block px-4 py-2 text-sm rounded-lg hover:bg-gray-100 ${
+                    pathname === item.href ? "bg-gray-100 font-medium" : ""
+                  }`}
+                >
+                  {item.name}
+                </Link>
               )}
             </li>
           ))}
