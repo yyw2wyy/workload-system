@@ -4,7 +4,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuthStore } from "@/lib/store/auth"
 import { useState } from "react"
-import { ChevronDown, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronRight, LogOut } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 const navigation = [
   { name: "用户中心", href: "/profile" },
@@ -51,9 +52,17 @@ export function Navbar() {
 
   return (
     <div className="fixed inset-y-0 left-0 w-64 bg-white border-r">
-      {/* 顶部Logo */}
-      <div className="h-16 flex items-center px-6 border-b">
+      {/* 顶部Logo和退出按钮 */}
+      <div className="h-16 flex items-center justify-between px-6 border-b">
         <span className="text-xl font-bold">工作量系统</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => logout()}
+          className="hover:bg-red-100 hover:text-red-600"
+        >
+          <LogOut className="h-5 w-5" />
+        </Button>
       </div>
 
       {/* 导航菜单 */}
