@@ -33,13 +33,8 @@ class WorkloadViewSet(viewsets.ModelViewSet):
                 Q(mentor_reviewer=user, submitter__role='student')  # 需要审核的学生工作量
             )
         elif user.role == 'teacher':
-            # 教师可以看到：1.自己提交的工作量 2.所有需要教师审核的工作量 3.所有已审核的工作量
-            return Workload.objects.filter(
-                Q(submitter=user) |  # 自己提交的
-                Q(status='mentor_approved') |  # 导师已审核的工作量
-                Q(submitter__role='mentor', status='pending') |  # 导师提交的待审核工作量
-                Q(teacher_reviewer=user)  # 教师已审核的工作量
-            )
+            # 教师可以看到所有工作量
+            return Workload.objects.all()
         return Workload.objects.none()
 
     def perform_create(self, serializer):
