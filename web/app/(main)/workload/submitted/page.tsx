@@ -94,7 +94,6 @@ export default function WorkloadSubmittedPage() {
   const [workloads, setWorkloads] = useState<Workload[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<number | null>(null)
-  const [filterType, setFilterType] = useState<"status" | "source">("status")
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
   const [selectedSource, setSelectedSource] = useState<string>("all")
   const [isStudent, setIsStudent] = useState(false)
@@ -165,28 +164,10 @@ export default function WorkloadSubmittedPage() {
 
   // 筛选工作量列表
   const filteredWorkloads = workloads.filter((workload) => {
-    if (filterType === "status") {
-      if (selectedStatus === "all") return true
-      return workload.status === selectedStatus
-    } else {
-      if (selectedSource === "all") return true
-      return workload.source === selectedSource
-    }
+    const matchesStatus = selectedStatus === "all" || workload.status === selectedStatus
+    const matchesSource = selectedSource === "all" || workload.source === selectedSource
+    return matchesStatus && matchesSource
   })
-
-  // 获取当前筛选值
-  const getCurrentFilterValue = () => {
-    return filterType === "status" ? selectedStatus : selectedSource
-  }
-
-  // 设置筛选值
-  const handleFilterValueChange = (value: string) => {
-    if (filterType === "status") {
-      setSelectedStatus(value)
-    } else {
-      setSelectedSource(value)
-    }
-  }
 
   return (
     <div className="container mx-auto py-10">
@@ -199,44 +180,32 @@ export default function WorkloadSubmittedPage() {
             </p>
           </div>
           <div className="flex items-center space-x-4">
-            <Select value={filterType} onValueChange={(value: "status" | "source") => setFilterType(value)}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="筛选方式" />
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="选择状态" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="status">按状态</SelectItem>
-                <SelectItem value="source">按来源</SelectItem>
+                <SelectItem value="all">全部状态</SelectItem>
+                <SelectItem value="pending">待审核</SelectItem>
+                <SelectItem value="mentor_approved">导师已审核</SelectItem>
+                <SelectItem value="teacher_approved">教师已审核</SelectItem>
+                <SelectItem value="mentor_rejected">导师已驳回</SelectItem>
+                <SelectItem value="teacher_rejected">教师已驳回</SelectItem>
               </SelectContent>
             </Select>
 
-            {filterType === "status" ? (
-              <Select value={selectedStatus} onValueChange={handleFilterValueChange}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="选择状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部状态</SelectItem>
-                  <SelectItem value="pending">待审核</SelectItem>
-                  <SelectItem value="mentor_approved">导师已审核</SelectItem>
-                  <SelectItem value="teacher_approved">教师已审核</SelectItem>
-                  <SelectItem value="mentor_rejected">导师已驳回</SelectItem>
-                  <SelectItem value="teacher_rejected">教师已驳回</SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <Select value={selectedSource} onValueChange={handleFilterValueChange}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="选择来源" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部来源</SelectItem>
-                  <SelectItem value="horizontal">横向</SelectItem>
-                  <SelectItem value="innovation">大创</SelectItem>
-                  <SelectItem value="hardware">硬件小组</SelectItem>
-                  <SelectItem value="assessment">考核小组</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
+            <Select value={selectedSource} onValueChange={setSelectedSource}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="选择来源" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部来源</SelectItem>
+                <SelectItem value="horizontal">横向</SelectItem>
+                <SelectItem value="innovation">大创</SelectItem>
+                <SelectItem value="hardware">硬件小组</SelectItem>
+                <SelectItem value="assessment">考核小组</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div className="border rounded-lg">
