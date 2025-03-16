@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAuthStore } from "@/lib/store/auth"
+import { Card } from "@/components/ui/card"
 
 // 工作量来源映射
 const sourceMap = {
@@ -97,6 +98,8 @@ export default function WorkloadSubmittedPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
   const [selectedSource, setSelectedSource] = useState<string>("all")
   const [isStudent, setIsStudent] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   // 从本地存储获取用户角色
   useEffect(() => {
@@ -169,6 +172,17 @@ export default function WorkloadSubmittedPage() {
     return matchesStatus && matchesSource
   })
 
+  // 计算分页数据
+  const totalPages = Math.ceil(filteredWorkloads.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentWorkloads = filteredWorkloads.slice(startIndex, endIndex)
+
+  // 处理页码变化
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
   return (
     <div className="container mx-auto py-10">
       <div className="space-y-6">
@@ -232,14 +246,14 @@ export default function WorkloadSubmittedPage() {
                     加载中...
                   </TableCell>
                 </TableRow>
-              ) : filteredWorkloads.length === 0 ? (
+              ) : currentWorkloads.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={isStudent ? 11 : 10} className="text-center py-10">
                     暂无工作量记录
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredWorkloads.map((workload) => (
+                currentWorkloads.map((workload) => (
                   <TableRow key={workload.id}>
                     <TableCell>{workload.name}</TableCell>
                     <TableCell>{sourceMap[workload.source]}</TableCell>
@@ -317,6 +331,52 @@ export default function WorkloadSubmittedPage() {
               )}
             </TableBody>
           </Table>
+
+          {/* 分页控件 */}
+          {!isLoading && filteredWorkloads.length > 0 && (
+            <div className="flex items-center justify-between px-4 py-4 border-t">
+              <div className="text-sm text-gray-500">
+                共 {filteredWorkloads.length} 条记录
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                >
+                  首页
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  上一页
+                </Button>
+                <div className="text-sm">
+                  第 {currentPage} / {totalPages} 页
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  下一页
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages}
+                >
+                  末页
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
