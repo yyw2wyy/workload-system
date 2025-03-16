@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, use } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { format } from "date-fns"
 import { ArrowLeft, FileIcon, ImageIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -79,10 +79,14 @@ export default function WorkloadDetailPage({
   params: Promise<{ id: string }>
 }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [workload, setWorkload] = useState<Workload | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isStudent, setIsStudent] = useState(false)
   const resolvedParams = use(params)
+
+  // 获取返回 URL
+  const returnUrl = searchParams.get('returnUrl') || '/workload/submitted'
 
   // 从本地存储获取用户角色
   useEffect(() => {
@@ -126,7 +130,7 @@ export default function WorkloadDetailPage({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push("/workload/submitted")}
+            onClick={() => router.push(returnUrl)}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -147,7 +151,7 @@ export default function WorkloadDetailPage({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push("/workload/submitted")}
+            onClick={() => router.push(returnUrl)}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
