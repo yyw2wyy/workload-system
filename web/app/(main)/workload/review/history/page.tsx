@@ -154,179 +154,190 @@ export default function WorkloadReviewHistoryPage() {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-medium">历史审核记录</h3>
-          <p className="text-sm text-muted-foreground">
-            查看已审核的工作量记录
-          </p>
-        </div>
+    <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6">
+      <div className="space-y-8">
+        <Card className="p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="space-y-1">
+              <h3 className="text-2xl font-semibold tracking-tight">历史审核记录</h3>
+              <p className="text-sm text-muted-foreground">
+                查看已审核的工作量记录
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+              <Select
+                value={selectedSubmitter}
+                onValueChange={(value) => {
+                  setSelectedSubmitter(value)
+                  setCurrentPage(1)
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-[180px] h-10">
+                  <SelectValue placeholder="选择提交人" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部提交人</SelectItem>
+                  {submitters.map((submitter) => (
+                    <SelectItem key={submitter.id} value={submitter.id.toString()}>
+                      {submitter.username}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-        {/* 筛选区域 */}
-        <div className="flex space-x-4">
-          <div className="w-[200px]">
-            <Select
-              value={selectedSubmitter}
-              onValueChange={setSelectedSubmitter}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="选择提交人" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部提交人</SelectItem>
-                {submitters.map((submitter) => (
-                  <SelectItem key={submitter.id} value={submitter.id.toString()}>
-                    {submitter.username}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Select
+                value={selectedSource}
+                onValueChange={(value) => {
+                  setSelectedSource(value)
+                  setCurrentPage(1)
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-[180px] h-10">
+                  <SelectValue placeholder="选择工作量来源" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部来源</SelectItem>
+                  {Object.entries(sourceMap).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>
+                      {value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="w-[200px]">
-            <Select
-              value={selectedSource}
-              onValueChange={setSelectedSource}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="选择工作量来源" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部来源</SelectItem>
-                {Object.entries(sourceMap).map(([key, value]) => (
-                  <SelectItem key={key} value={key}>
-                    {value}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>工作量名称</TableHead>
-                <TableHead>提交人</TableHead>
-                <TableHead>工作量来源</TableHead>
-                <TableHead>工作类型</TableHead>
-                <TableHead>开始日期</TableHead>
-                <TableHead>结束日期</TableHead>
-                <TableHead>审核时间</TableHead>
-                <TableHead>状态</TableHead>
-                <TableHead className="text-right">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center">
-                    加载中...
-                  </TableCell>
+          <div className="rounded-lg border shadow-sm">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead className="font-semibold">工作量名称</TableHead>
+                  <TableHead className="font-semibold">提交人</TableHead>
+                  <TableHead className="font-semibold">工作量来源</TableHead>
+                  <TableHead className="font-semibold">工作类型</TableHead>
+                  <TableHead className="font-semibold">开始日期</TableHead>
+                  <TableHead className="font-semibold">结束日期</TableHead>
+                  <TableHead className="font-semibold">审核时间</TableHead>
+                  <TableHead className="font-semibold">状态</TableHead>
+                  <TableHead className="text-right font-semibold">操作</TableHead>
                 </TableRow>
-              ) : currentWorkloads.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center">
-                    暂无已审核的工作量
-                  </TableCell>
-                </TableRow>
-              ) : (
-                currentWorkloads.map((workload) => (
-                  <TableRow key={workload.id}>
-                    <TableCell>{workload.name}</TableCell>
-                    <TableCell>{workload.submitter.username}</TableCell>
-                    <TableCell>{sourceMap[workload.source]}</TableCell>
-                    <TableCell>{typeMap[workload.work_type]}</TableCell>
-                    <TableCell>
-                      {format(new Date(workload.start_date), "yyyy年MM月dd日")}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(workload.end_date), "yyyy年MM月dd日")}
-                    </TableCell>
-                    <TableCell>
-                      {user?.role === "teacher" 
-                        ? (workload.teacher_review_time && format(
-                            new Date(workload.teacher_review_time),
-                            "yyyy年MM月dd日 HH:mm:ss"
-                          ))
-                        : (workload.mentor_review_time && format(
-                            new Date(workload.mentor_review_time),
-                            "yyyy年MM月dd日 HH:mm:ss"
-                          ))
-                      }
-                    </TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-sm ${
-                        workload.status.includes("approved") 
-                          ? "bg-green-100 text-green-800"
-                          : workload.status.includes("rejected")
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}>
-                        {statusMap[workload.status]}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        onClick={() => router.push(`/workload/detail/${workload.id}?returnUrl=/workload/review/history`)}
-                      >
-                        查看详情
-                      </Button>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="h-32 text-center">
+                      <div className="flex items-center justify-center text-muted-foreground">
+                        加载中...
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : currentWorkloads.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="h-32 text-center">
+                      <div className="flex flex-col items-center justify-center text-muted-foreground">
+                        <p>暂无已审核的工作量</p>
+                        <p className="text-sm">请等待工作量提交和审核</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  currentWorkloads.map((workload) => (
+                    <TableRow key={workload.id} className="hover:bg-gray-50">
+                      <TableCell className="font-medium">{workload.name}</TableCell>
+                      <TableCell>{workload.submitter.username}</TableCell>
+                      <TableCell>{sourceMap[workload.source]}</TableCell>
+                      <TableCell>{typeMap[workload.work_type]}</TableCell>
+                      <TableCell>{format(new Date(workload.start_date), "yyyy年MM月dd日")}</TableCell>
+                      <TableCell>{format(new Date(workload.end_date), "yyyy年MM月dd日")}</TableCell>
+                      <TableCell>
+                        {user?.role === "teacher" 
+                          ? (workload.teacher_review_time && format(
+                              new Date(workload.teacher_review_time),
+                              "yyyy年MM月dd日 HH:mm:ss"
+                            ))
+                          : (workload.mentor_review_time && format(
+                              new Date(workload.mentor_review_time),
+                              "yyyy年MM月dd日 HH:mm:ss"
+                            ))
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                          workload.status.includes("approved") 
+                            ? "bg-green-50 text-green-700 ring-1 ring-green-600/20"
+                            : workload.status.includes("rejected")
+                            ? "bg-red-50 text-red-700 ring-1 ring-red-600/20"
+                            : "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20"
+                        }`}>
+                          {statusMap[workload.status]}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push(`/workload/detail/${workload.id}?returnUrl=/workload/review/history`)}
+                          className="h-8 px-3 hover:bg-gray-100"
+                        >
+                          查看详情
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
 
-          {/* 分页控件 */}
-          {!isLoading && filteredWorkloads.length > 0 && (
-            <div className="flex items-center justify-between px-4 py-4 border-t">
-              <div className="text-sm text-gray-500">
-                共 {filteredWorkloads.length} 条记录
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(1)}
-                  disabled={currentPage === 1}
-                >
-                  首页
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  上一页
-                </Button>
-                <div className="text-sm">
-                  第 {currentPage} / {totalPages} 页
+            {/* 分页控件 */}
+            {!isLoading && filteredWorkloads.length > 0 && (
+              <div className="flex items-center justify-between px-4 py-4 border-t bg-white">
+                <div className="text-sm text-gray-500">
+                  共 {filteredWorkloads.length} 条记录
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  下一页
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={currentPage === totalPages}
-                >
-                  末页
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(1)}
+                    disabled={currentPage === 1}
+                    className="h-8 px-3 text-xs"
+                  >
+                    首页
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="h-8 px-3 text-xs"
+                  >
+                    上一页
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    第 {currentPage} / {totalPages} 页
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 px-3 text-xs"
+                  >
+                    下一页
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 px-3 text-xs"
+                  >
+                    末页
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </Card>
       </div>
     </div>

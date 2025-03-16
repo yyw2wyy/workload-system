@@ -17,6 +17,9 @@ import {
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { useAuthStore } from "@/lib/store/auth"
+import { ArrowLeft } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { ImageIcon, FileIcon } from "lucide-react"
 
 // 工作量来源映射
 const sourceMap = {
@@ -158,173 +161,221 @@ export default function WorkloadReviewPage({ params }: { params: Promise<{ id: s
   }
 
   if (isLoading) {
-    return <div className="container mx-auto py-10">加载中...</div>
+    return (
+      <div className="max-w-4xl mx-auto py-10 px-4 sm:px-6">
+        <div className="flex items-center space-x-4 mb-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/workload/review")}
+            className="h-9 w-9 hover:bg-gray-100"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h3 className="text-2xl font-semibold tracking-tight">加载中...</h3>
+        </div>
+      </div>
+    )
   }
 
   if (!workload) {
-    return <div className="container mx-auto py-10">未找到工作量信息</div>
+    return null
   }
 
   return (
-    <div className="container mx-auto py-10 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-medium">审核工作量</h3>
-          <p className="text-sm text-muted-foreground">
-            查看工作量详情并进行审核
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => router.push("/workload/review")}>
-          返回列表
-        </Button>
-      </div>
-
-      {/* 工作量详情卡片 */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>工作量详情</CardTitle>
-          {(user?.role === "mentor" || user?.role === "teacher") && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push(`/workload/${id}/edit?returnUrl=/workload/review/${id}`)}
-            >
-              编辑工作量
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>工作量名称</Label>
-              <div className="mt-1">{workload.name}</div>
-            </div>
-            <div>
-              <Label>提交人</Label>
-              <div className="mt-1">{workload.submitter.username}</div>
-            </div>
-            <div>
-              <Label>工作量来源</Label>
-              <div className="mt-1">{sourceMap[workload.source]}</div>
-            </div>
-            <div>
-              <Label>工作类型</Label>
-              <div className="mt-1">{typeMap[workload.work_type]}</div>
-            </div>
-            <div>
-              <Label>开始日期</Label>
-              <div className="mt-1">
-                {format(new Date(workload.start_date), "yyyy年MM月dd日")}
-              </div>
-            </div>
-            <div>
-              <Label>结束日期</Label>
-              <div className="mt-1">
-                {format(new Date(workload.end_date), "yyyy年MM月dd日")}
-              </div>
-            </div>
-            <div>
-              <Label>工作强度</Label>
-              <div className="mt-1">
-                {workload.intensity_value} {intensityTypeMap[workload.intensity_type]}
-              </div>
-            </div>
-            <div>
-              <Label>提交时间</Label>
-              <div className="mt-1">
-                {format(new Date(workload.created_at), "yyyy年MM月dd日 HH:mm:ss")}
-              </div>
-            </div>
-          </div>
-
+    <div className="max-w-4xl mx-auto py-10 px-4 sm:px-6">
+      <div className="space-y-8">
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/workload/review")}
+            className="h-9 w-9 hover:bg-gray-100"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
           <div>
-            <Label>工作内容</Label>
-            <div className="mt-1 whitespace-pre-wrap">{workload.content}</div>
+            <h3 className="text-2xl font-semibold tracking-tight">审核工作量</h3>
+            <p className="text-sm text-muted-foreground mt-1">查看工作量详情并进行审核</p>
           </div>
+        </div>
 
-          {workload.image_path && (
-            <div>
-              <Label>相关图片</Label>
-              <div className="mt-1">
-                <a href={workload.image_path} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                  查看图片
-                </a>
+        {/* 基本信息卡片 */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl">{workload.name}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-8">
+            {/* 基本信息 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">工作量来源</Label>
+                <div className="text-base">{sourceMap[workload.source]}</div>
+              </div>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">工作类型</Label>
+                <div className="text-base">{typeMap[workload.work_type]}</div>
+              </div>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">开始日期</Label>
+                <div className="text-base">{format(new Date(workload.start_date), "yyyy年MM月dd日")}</div>
+              </div>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">结束日期</Label>
+                <div className="text-base">{format(new Date(workload.end_date), "yyyy年MM月dd日")}</div>
+              </div>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">工作强度类型</Label>
+                <div className="text-base">{intensityTypeMap[workload.intensity_type]}</div>
+              </div>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">工作强度值</Label>
+                <div className="text-base">{workload.intensity_value}</div>
               </div>
             </div>
-          )}
 
-          {workload.file_path && (
-            <div>
-              <Label>相关文件</Label>
-              <div className="mt-1">
-                <a href={workload.file_path} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                  查看文件
-                </a>
+            <Separator className="my-6" />
+
+            {/* 工作内容 */}
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium text-gray-500">工作内容</Label>
+              <div className="whitespace-pre-wrap rounded-lg border bg-gray-50/50 p-4 text-base">
+                {workload.content}
               </div>
             </div>
-          )}
 
-          {/* 显示导师审核信息（如果有） */}
-          {workload.mentor_comment && (
-            <div>
-              <Label>导师审核意见</Label>
-              <div className="mt-1">
-                <div className="whitespace-pre-wrap">{workload.mentor_comment}</div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  {workload.mentor_review_time && 
-                    format(new Date(workload.mentor_review_time), "yyyy年MM月dd日 HH:mm:ss")}
+            <Separator className="my-6" />
+
+            {/* 附件 */}
+            <div className="space-y-6">
+              {workload.image_path && (
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-medium text-gray-500">图片附件</Label>
+                  <div className="flex items-center space-x-2">
+                    <ImageIcon className="h-4 w-4 text-gray-500" />
+                    <a
+                      href={workload.image_path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 hover:underline"
+                    >
+                      查看图片
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {workload.file_path && (
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-medium text-gray-500">文件附件</Label>
+                  <div className="flex items-center space-x-2">
+                    <FileIcon className="h-4 w-4 text-gray-500" />
+                    <a
+                      href={workload.file_path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 hover:underline"
+                    >
+                      下载文件
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Separator className="my-6" />
+
+            {/* 提交信息 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">提交人</Label>
+                <div className="text-base">{workload.submitter.username}</div>
+              </div>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">提交时间</Label>
+                <div className="text-base">
+                  {format(new Date(workload.created_at), "yyyy年MM月dd日 HH:mm:ss")}
                 </div>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* 审核操作区域 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>审核操作</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label>审核结果</Label>
-            <Select value={reviewStatus} onValueChange={setReviewStatus}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="请选择审核结果" />
-              </SelectTrigger>
-              <SelectContent>
-                {reviewOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            {/* 如果有导师审核信息，显示导师审核信息 */}
+            {workload.mentor_comment && (
+              <>
+                <Separator className="my-6" />
+                <div className="space-y-6">
+                  <Label className="block text-base font-semibold">原导师审核意见</Label>
+                  <div className="space-y-2.5">
+                    <div className="whitespace-pre-wrap rounded-lg border bg-gray-50/50 p-4 text-base">
+                      {workload.mentor_comment}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      审核时间：{workload.mentor_review_time 
+                        ? format(new Date(workload.mentor_review_time), "yyyy年MM月dd日 HH:mm:ss")
+                        : '-'}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
-          <div>
-            <Label>审核意见</Label>
-            <Textarea
-              className="mt-1"
-              placeholder="请输入审核意见"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-            />
-          </div>
+        {/* 审核操作卡片 */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl">审核操作</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium text-gray-500">审核结果</Label>
+              <Select value={reviewStatus} onValueChange={setReviewStatus}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="请选择审核结果" />
+                </SelectTrigger>
+                <SelectContent>
+                  {reviewOptions.map(option => (
+                    <SelectItem 
+                      key={option.value} 
+                      value={option.value}
+                      className="cursor-pointer hover:bg-gray-100"
+                    >
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" onClick={() => router.push("/workload/review")}>
-              取消
-            </Button>
-            <Button 
-              onClick={handleSubmit} 
-              disabled={isSubmitting || !reviewStatus || !comment}
-            >
-              {isSubmitting ? "提交中..." : "提交审核"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium text-gray-500">审核意见</Label>
+              <Textarea
+                placeholder="请输入审核意见"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="min-h-[120px] resize-none"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/workload/review")}
+                className="h-10 px-6 hover:bg-gray-100"
+              >
+                返回
+              </Button>
+              <Button 
+                onClick={handleSubmit}
+                disabled={isSubmitting || !reviewStatus || !comment}
+                className="h-10 px-6 bg-red-600 hover:bg-red-500"
+              >
+                {isSubmitting ? "提交中..." : "提交审核"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 } 

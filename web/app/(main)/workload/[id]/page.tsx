@@ -150,77 +150,81 @@ export default function WorkloadDetailPage({
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="space-y-6">
+    <div className="max-w-4xl mx-auto py-10 px-4 sm:px-6">
+      <div className="space-y-8">
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => router.push(returnUrl)}
+            className="h-9 w-9 hover:bg-gray-100"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h3 className="text-lg font-medium">工作量详情</h3>
+          <div>
+            <h3 className="text-2xl font-semibold tracking-tight">工作量详情</h3>
+            <p className="text-sm text-muted-foreground mt-1">查看工作量的详细信息和审核状态</p>
+          </div>
         </div>
 
         {/* 基本信息卡片 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{workload.name}</CardTitle>
+        <Card className="shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl">{workload.name}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8">
             {/* 基本信息 */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>工作量来源</Label>
-                <div>{sourceMap[workload.source]}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">工作量来源</Label>
+                <div className="text-base">{sourceMap[workload.source]}</div>
               </div>
-              <div className="space-y-2">
-                <Label>工作类型</Label>
-                <div>{typeMap[workload.work_type]}</div>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">工作类型</Label>
+                <div className="text-base">{typeMap[workload.work_type]}</div>
               </div>
-              <div className="space-y-2">
-                <Label>开始日期</Label>
-                <div>{format(new Date(workload.start_date), "yyyy年MM月dd日")}</div>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">开始日期</Label>
+                <div className="text-base">{format(new Date(workload.start_date), "yyyy年MM月dd日")}</div>
               </div>
-              <div className="space-y-2">
-                <Label>结束日期</Label>
-                <div>{format(new Date(workload.end_date), "yyyy年MM月dd日")}</div>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">结束日期</Label>
+                <div className="text-base">{format(new Date(workload.end_date), "yyyy年MM月dd日")}</div>
               </div>
-              <div className="space-y-2">
-                <Label>工作强度类型</Label>
-                <div>{intensityTypeMap[workload.intensity_type]}</div>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">工作强度类型</Label>
+                <div className="text-base">{intensityTypeMap[workload.intensity_type]}</div>
               </div>
-              <div className="space-y-2">
-                <Label>工作强度值</Label>
-                <div>{workload.intensity_value}</div>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">工作强度值</Label>
+                <div className="text-base">{workload.intensity_value}</div>
               </div>
             </div>
 
-            <Separator />
+            <Separator className="my-6" />
 
             {/* 工作内容 */}
-            <div className="space-y-2">
-              <Label>工作内容</Label>
-              <div className="whitespace-pre-wrap rounded-lg border p-4">
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium text-gray-500">工作内容</Label>
+              <div className="whitespace-pre-wrap rounded-lg border bg-gray-50/50 p-4 text-base">
                 {workload.content}
               </div>
             </div>
 
-            <Separator />
+            <Separator className="my-6" />
 
             {/* 附件 */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               {workload.image_path && (
-                <div className="space-y-2">
-                  <Label>图片附件</Label>
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-medium text-gray-500">图片附件</Label>
                   <div className="flex items-center space-x-2">
-                    <ImageIcon className="h-4 w-4" />
+                    <ImageIcon className="h-4 w-4 text-gray-500" />
                     <a
                       href={workload.image_path}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="text-blue-600 hover:text-blue-700 hover:underline"
                     >
                       查看图片
                     </a>
@@ -229,15 +233,15 @@ export default function WorkloadDetailPage({
               )}
 
               {workload.file_path && (
-                <div className="space-y-2">
-                  <Label>文件附件</Label>
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-medium text-gray-500">文件附件</Label>
                   <div className="flex items-center space-x-2">
-                    <FileIcon className="h-4 w-4" />
+                    <FileIcon className="h-4 w-4 text-gray-500" />
                     <a
                       href={workload.file_path}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="text-blue-600 hover:text-blue-700 hover:underline"
                     >
                       下载文件
                     </a>
@@ -246,38 +250,38 @@ export default function WorkloadDetailPage({
               )}
             </div>
 
-            <Separator />
+            <Separator className="my-6" />
 
             {/* 时间信息 */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>创建时间</Label>
-                <div>{format(new Date(workload.created_at), "yyyy年MM月dd日 HH:mm:ss")}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">创建时间</Label>
+                <div className="text-base">{format(new Date(workload.created_at), "yyyy年MM月dd日 HH:mm:ss")}</div>
               </div>
-              <div className="space-y-2">
-                <Label>更新时间</Label>
-                <div>{format(new Date(workload.updated_at), "yyyy年MM月dd日 HH:mm:ss")}</div>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">更新时间</Label>
+                <div className="text-base">{format(new Date(workload.updated_at), "yyyy年MM月dd日 HH:mm:ss")}</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* 审核信息卡片 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>审核信息</CardTitle>
+        <Card className="shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl">审核信息</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8">
             {/* 审核状态 */}
-            <div className="space-y-2">
-              <Label>审核状态</Label>
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium text-gray-500">审核状态</Label>
               <div>
-                <span className={`px-2 py-1 rounded-full text-sm ${
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                   workload.status.includes("approved") 
-                    ? "bg-green-100 text-green-800"
+                    ? "bg-green-50 text-green-700 ring-1 ring-green-600/20"
                     : workload.status.includes("rejected")
-                    ? "bg-red-100 text-red-800"
-                    : "bg-yellow-100 text-yellow-800"
+                    ? "bg-red-50 text-red-700 ring-1 ring-red-600/20"
+                    : "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20"
                 }`}>
                   {statusMap[workload.status]}
                 </span>
@@ -287,54 +291,54 @@ export default function WorkloadDetailPage({
             {/* 导师审核信息 */}
             {workload.submitter?.role === 'student' && (
               <>
-                <div className="space-y-4">
-                  <Label className="text-base font-semibold">导师审核</Label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>审核人</Label>
-                      <div>{workload.mentor_reviewer?.username || '-'}</div>
+                <div className="space-y-6">
+                  <Label className="block text-base font-semibold">导师审核</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2.5">
+                      <Label className="text-sm font-medium text-gray-500">审核人</Label>
+                      <div className="text-base">{workload.mentor_reviewer?.username || '-'}</div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>审核时间</Label>
-                      <div>
+                    <div className="space-y-2.5">
+                      <Label className="text-sm font-medium text-gray-500">审核时间</Label>
+                      <div className="text-base">
                         {workload.mentor_review_time 
                           ? format(new Date(workload.mentor_review_time), "yyyy年MM月dd日 HH:mm:ss")
                           : '-'}
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>审核评语</Label>
-                    <div className="whitespace-pre-wrap rounded-lg border p-4">
+                  <div className="space-y-2.5">
+                    <Label className="text-sm font-medium text-gray-500">审核评语</Label>
+                    <div className="whitespace-pre-wrap rounded-lg border bg-gray-50/50 p-4 text-base">
                       {workload.mentor_comment || '暂无评语'}
                     </div>
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="my-6" />
               </>
             )}
 
             {/* 教师审核信息 */}
-            <div className="space-y-4">
-              <Label className="text-base font-semibold">教师审核</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>审核人</Label>
-                  <div>{workload.teacher_reviewer?.username || '-'}</div>
+            <div className="space-y-6">
+              <Label className="block text-base font-semibold">教师审核</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-medium text-gray-500">审核人</Label>
+                  <div className="text-base">{workload.teacher_reviewer?.username || '-'}</div>
                 </div>
-                <div className="space-y-2">
-                  <Label>审核时间</Label>
-                  <div>
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-medium text-gray-500">审核时间</Label>
+                  <div className="text-base">
                     {workload.teacher_review_time 
                       ? format(new Date(workload.teacher_review_time), "yyyy年MM月dd日 HH:mm:ss")
                       : '-'}
                   </div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>审核评语</Label>
-                <div className="whitespace-pre-wrap rounded-lg border p-4">
+              <div className="space-y-2.5">
+                <Label className="text-sm font-medium text-gray-500">审核评语</Label>
+                <div className="whitespace-pre-wrap rounded-lg border bg-gray-50/50 p-4 text-base">
                   {workload.teacher_comment || '暂无评语'}
                 </div>
               </div>

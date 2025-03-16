@@ -234,201 +234,219 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">个人中心</h1>
+    <div className="min-h-[calc(100vh-4rem)] bg-gray-50/30">
+      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 space-y-8">
+        <Card className="shadow-lg">
+          <CardHeader className="border-b bg-gray-50/50 space-y-1">
+            <CardTitle className="text-xl">个人信息</CardTitle>
+            <CardDescription>查看和管理您的个人信息</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <dl className="divide-y divide-gray-100">
+              <div className="grid grid-cols-1 sm:grid-cols-3 py-4 gap-4">
+                <dt className="text-sm font-medium text-gray-500">用户名</dt>
+                <dd className="text-sm text-gray-900 sm:col-span-2">
+                  {user.username || '未设置'}
+                </dd>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 py-4 gap-4">
+                <dt className="text-sm font-medium text-gray-500">邮箱</dt>
+                <dd className="text-sm text-gray-900 sm:col-span-2">
+                  {user.email || '未设置'}
+                </dd>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 py-4 gap-4">
+                <dt className="text-sm font-medium text-gray-500">角色</dt>
+                <dd className="text-sm text-gray-900 sm:col-span-2">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 ring-1 ring-blue-600/20">
+                    {getRoleDisplay(user.role)}
+                  </span>
+                </dd>
+              </div>
+            </dl>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>个人信息</CardTitle>
-          <CardDescription>查看和管理您的个人信息</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <dl className="divide-y divide-gray-100">
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-              <dt className="text-sm font-medium leading-6 text-gray-900">用户名</dt>
-              <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                {user.username || '未设置'}
-              </dd>
-            </div>
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-              <dt className="text-sm font-medium leading-6 text-gray-900">邮箱</dt>
-              <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                {user.email || '未设置'}
-              </dd>
-            </div>
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-              <dt className="text-sm font-medium leading-6 text-gray-900">角色</dt>
-              <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                {getRoleDisplay(user.role)}
-              </dd>
-            </div>
-          </dl>
-
-          <div className="flex justify-end space-x-2 mt-6">
-            <Button
-              onClick={handleEditDialogOpen}
-              variant="outline"
-            >
-              更改资料
-            </Button>
-            <Button
-              onClick={() => setShowPasswordDialog(true)}
-            >
-              修改密码
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 编辑资料对话框 */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>更改资料</DialogTitle>
-            <DialogDescription>
-              修改您的用户名和邮箱地址
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleInfoSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">用户名</Label>
-              <Input
-                id="username"
-                value={formData.username}
-                onChange={(e) =>
-                  setFormData({ ...formData, username: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">邮箱</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-3 mt-8">
               <Button
-                type="button"
+                onClick={handleEditDialogOpen}
                 variant="outline"
-                onClick={() => {
-                  setShowEditDialog(false)
-                  setFormData({
-                    username: user.username || "",
-                    email: user.email || "",
-                  })
-                }}
+                className="h-10 px-4 hover:bg-gray-100"
               >
-                取消
+                更改资料
               </Button>
-              <Button type="submit">
-                保存
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* 修改密码对话框 */}
-      <Dialog 
-        open={showPasswordDialog} 
-        onOpenChange={(open) => {
-          if (!open) {
-            setPasswordForm({
-              currentPassword: "",
-              newPassword: "",
-              confirm_password: "",
-            })
-          }
-          setShowPasswordDialog(open)
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>修改密码</DialogTitle>
-            <DialogDescription>
-              更新您的账户密码
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="currentPassword">当前密码</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                value={passwordForm.currentPassword}
-                onChange={(e) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    currentPassword: e.target.value,
-                  })
-                }
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">新密码</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={passwordForm.newPassword}
-                onChange={(e) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    newPassword: e.target.value,
-                  })
-                }
-                required
-                minLength={8}
-              />
-              <p className="text-sm text-gray-500">
-                密码必须至少8个字符，不能全为数字，且不能使用常见密码
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm_password">确认新密码</Label>
-              <Input
-                id="confirm_password"
-                type="password"
-                value={passwordForm.confirm_password}
-                onChange={(e) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    confirm_password: e.target.value,
-                  })
-                }
-                required
-                minLength={8}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
               <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowPasswordDialog(false)
-                  setPasswordForm({
-                    currentPassword: "",
-                    newPassword: "",
-                    confirm_password: "",
-                  })
-                }}
+                onClick={() => setShowPasswordDialog(true)}
+                className="h-10 px-4"
               >
-                取消
-              </Button>
-              <Button type="submit">
-                更新密码
+                修改密码
               </Button>
             </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+
+        {/* 编辑资料对话框 */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader className="space-y-1">
+              <DialogTitle className="text-xl">更改资料</DialogTitle>
+              <DialogDescription>
+                修改您的用户名和邮箱地址
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleInfoSubmit} className="space-y-6 py-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">用户名</Label>
+                  <Input
+                    value={formData.username}
+                    onChange={(e) =>
+                      setFormData({ ...formData, username: e.target.value })
+                    }
+                    className="h-10"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">邮箱</Label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    className="h-10"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditDialog(false)
+                    setFormData({
+                      username: user.username || "",
+                      email: user.email || "",
+                    })
+                  }}
+                  className="h-10 px-4 hover:bg-gray-100"
+                >
+                  取消
+                </Button>
+                <Button 
+                  type="submit"
+                  className="h-10 px-4"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "保存中..." : "保存"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* 修改密码对话框 */}
+        <Dialog 
+          open={showPasswordDialog} 
+          onOpenChange={(open) => {
+            if (!open) {
+              setPasswordForm({
+                currentPassword: "",
+                newPassword: "",
+                confirm_password: "",
+              })
+            }
+            setShowPasswordDialog(open)
+          }}
+        >
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader className="space-y-1">
+              <DialogTitle className="text-xl">修改密码</DialogTitle>
+              <DialogDescription>
+                更新您的账户密码，请确保密码安全
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handlePasswordSubmit} className="space-y-6 py-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">当前密码</Label>
+                  <Input
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+                        currentPassword: e.target.value,
+                      })
+                    }
+                    className="h-10"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">新密码</Label>
+                  <Input
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+                        newPassword: e.target.value,
+                      })
+                    }
+                    className="h-10"
+                    required
+                    minLength={8}
+                  />
+                  <p className="text-sm text-gray-500">
+                    密码必须至少8个字符，不能全为数字，且不能使用常见密码
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">确认新密码</Label>
+                  <Input
+                    type="password"
+                    value={passwordForm.confirm_password}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+                        confirm_password: e.target.value,
+                      })
+                    }
+                    className="h-10"
+                    required
+                    minLength={8}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowPasswordDialog(false)
+                    setPasswordForm({
+                      currentPassword: "",
+                      newPassword: "",
+                      confirm_password: "",
+                    })
+                  }}
+                  className="h-10 px-4 hover:bg-gray-100"
+                >
+                  取消
+                </Button>
+                <Button 
+                  type="submit"
+                  className="h-10 px-4"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "更新中..." : "更新密码"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   )
 } 

@@ -311,8 +311,8 @@ export default function WorkloadEditPage({
 
   return (
     <ConfigProvider locale={zhCN}>
-      <div className="container mx-auto py-10">
-        <div className="space-y-6">
+      <div className="max-w-4xl mx-auto py-10 px-4 sm:px-6">
+        <div className="space-y-8">
           <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
@@ -324,27 +324,31 @@ export default function WorkloadEditPage({
                   router.push("/workload/submitted")
                 }
               }}
+              className="h-9 w-9 hover:bg-gray-100"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h3 className="text-lg font-medium">编辑工作量</h3>
+            <div>
+              <h3 className="text-2xl font-semibold tracking-tight">编辑工作量</h3>
+              <p className="text-sm text-muted-foreground mt-1">修改工作量信息</p>
+            </div>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>工作量信息</CardTitle>
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl">工作量信息</CardTitle>
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                   <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>工作量名称</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-500">工作量名称</FormLabel>
                         <FormControl>
-                          <Input placeholder="请输入工作量名称" {...field} />
+                          <Input placeholder="请输入工作量名称" className="h-10" {...field} />
                         </FormControl>
                         <FormMessage className="empty:hidden" />
                       </FormItem>
@@ -356,11 +360,11 @@ export default function WorkloadEditPage({
                     name="content"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>工作内容</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-500">工作内容</FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="请输入工作内容"
-                            className="min-h-[100px]"
+                            className="min-h-[120px] resize-none"
                             {...field}
                           />
                         </FormControl>
@@ -369,19 +373,19 @@ export default function WorkloadEditPage({
                     )}
                   />
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
                       name="source"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>工作量来源</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-500">工作量来源</FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="h-10">
                                 <SelectValue placeholder="请选择工作量来源" />
                               </SelectTrigger>
                             </FormControl>
@@ -390,6 +394,7 @@ export default function WorkloadEditPage({
                                 <SelectItem
                                   key={option.value}
                                   value={option.value}
+                                  className="cursor-pointer hover:bg-gray-100"
                                 >
                                   {option.label}
                                 </SelectItem>
@@ -406,13 +411,13 @@ export default function WorkloadEditPage({
                       name="work_type"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>工作类型</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-500">工作类型</FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="h-10">
                                 <SelectValue placeholder="请选择工作类型" />
                               </SelectTrigger>
                             </FormControl>
@@ -421,6 +426,7 @@ export default function WorkloadEditPage({
                                 <SelectItem
                                   key={option.value}
                                   value={option.value}
+                                  className="cursor-pointer hover:bg-gray-100"
                                 >
                                   {option.label}
                                 </SelectItem>
@@ -437,10 +443,10 @@ export default function WorkloadEditPage({
                       name="start_date"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel>开始日期</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-500">开始日期</FormLabel>
                           <FormControl>
                             <DatePicker
-                              className="w-full"
+                              className="w-full h-10"
                               placeholder="选择日期"
                               format="YYYY年MM月DD日"
                               value={field.value ? dayjs(field.value) : null}
@@ -462,10 +468,10 @@ export default function WorkloadEditPage({
                       name="end_date"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel>结束日期</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-500">结束日期</FormLabel>
                           <FormControl>
                             <DatePicker
-                              className="w-full"
+                              className="w-full h-10"
                               placeholder="选择日期"
                               format="YYYY年MM月DD日"
                               value={field.value ? dayjs(field.value) : null}
@@ -487,13 +493,13 @@ export default function WorkloadEditPage({
                       name="intensity_type"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>工作强度类型</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-500">工作强度类型</FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="h-10">
                                 <SelectValue placeholder="请选择工作强度类型" />
                               </SelectTrigger>
                             </FormControl>
@@ -502,6 +508,7 @@ export default function WorkloadEditPage({
                                 <SelectItem
                                   key={option.value}
                                   value={option.value}
+                                  className="cursor-pointer hover:bg-gray-100"
                                 >
                                   {option.label}
                                 </SelectItem>
@@ -518,12 +525,13 @@ export default function WorkloadEditPage({
                       name="intensity_value"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>工作强度值</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-500">工作强度值</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               step="0.1"
                               placeholder="请输入工作强度值"
+                              className="h-10"
                               {...field}
                             />
                           </FormControl>
@@ -538,13 +546,13 @@ export default function WorkloadEditPage({
                         name="mentor_reviewer_id"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>审核导师</FormLabel>
+                            <FormLabel className="text-sm font-medium text-gray-500">审核导师</FormLabel>
                             <Select
                               value={field.value}
                               onValueChange={field.onChange}
                             >
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger className="h-10">
                                   <SelectValue placeholder="请选择审核导师" />
                                 </SelectTrigger>
                               </FormControl>
@@ -553,6 +561,7 @@ export default function WorkloadEditPage({
                                   <SelectItem
                                     key={reviewer.id}
                                     value={reviewer.id.toString()}
+                                    className="cursor-pointer hover:bg-gray-100"
                                   >
                                     {reviewer.username}
                                   </SelectItem>
@@ -566,13 +575,13 @@ export default function WorkloadEditPage({
                     )}
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <FormField
                       control={form.control}
                       name="image"
                       render={({ field: { value, onChange, ...field } }) => (
                         <FormItem>
-                          <FormLabel>图片上传</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-500">图片上传</FormLabel>
                           <FormControl>
                             <Input
                               type="file"
@@ -581,6 +590,7 @@ export default function WorkloadEditPage({
                                 const file = e.target.files?.[0]
                                 onChange(file)
                               }}
+                              className="h-10 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
                               {...field}
                             />
                           </FormControl>
@@ -594,7 +604,7 @@ export default function WorkloadEditPage({
                       name="file"
                       render={({ field: { value, onChange, ...field } }) => (
                         <FormItem>
-                          <FormLabel>文件上传</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-500">文件上传</FormLabel>
                           <FormControl>
                             <Input
                               type="file"
@@ -602,6 +612,7 @@ export default function WorkloadEditPage({
                                 const file = e.target.files?.[0]
                                 onChange(file)
                               }}
+                              className="h-10 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
                               {...field}
                             />
                           </FormControl>
@@ -622,10 +633,16 @@ export default function WorkloadEditPage({
                           router.push("/workload/submitted")
                         }
                       }}
+                      className="h-10 px-6 hover:bg-gray-100"
                     >
                       取消
                     </Button>
-                    <Button type="submit">保存</Button>
+                    <Button 
+                      type="submit"
+                      className="h-10 px-6 bg-red-600 hover:bg-red-500"
+                    >
+                      保存
+                    </Button>
                   </div>
                 </form>
               </Form>

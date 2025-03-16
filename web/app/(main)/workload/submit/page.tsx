@@ -14,10 +14,7 @@ import zhCN from "antd/locale/zh_CN"
 import "dayjs/locale/zh-cn"
 import "antd/dist/reset.css"
 import { useRouter } from "next/navigation"
-
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import { Card } from "@/components/ui/card"
 import {
   Form,
   FormControl,
@@ -41,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
 
 const workloadFormSchema = z.object({
   name: z.string().min(1, "请输入工作量名称"),
@@ -216,115 +214,28 @@ export default function WorkloadSubmitPage() {
 
   return (
     <ConfigProvider locale={zhCN}>
-      <div className="max-w-2xl mx-auto py-10">
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-medium">提交工作量</h3>
+      <div className="max-w-3xl mx-auto py-10 px-4">
+        <div className="space-y-8">
+          <div className="text-center space-y-2">
+            <h3 className="text-2xl font-semibold tracking-tight">提交工作量</h3>
             <p className="text-sm text-muted-foreground">
               填写工作量信息，提交后等待审核
             </p>
           </div>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>工作量名称</FormLabel>
-                    <FormControl>
-                      <Input placeholder="请输入工作量名称" {...field} />
-                    </FormControl>
-                    <FormMessage className="empty:hidden" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="content"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>工作量内容</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="请详细描述工作量内容"
-                        className="resize-none"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage className="empty:hidden" />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
+          <Card className="p-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
-                  name="source"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>工作量来源</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="请选择工作量来源" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {sourceOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="empty:hidden" />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>工作量类型</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="请选择工作量类型" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {typeOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="empty:hidden" />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="startDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>开始日期</FormLabel>
+                      <FormLabel className="text-base">工作量名称</FormLabel>
                       <FormControl>
-                        <DatePicker
-                          className="w-full"
-                          placeholder="选择日期"
-                          format="YYYY年MM月DD日"
-                          value={field.value ? dayjs(field.value) : null}
-                          onChange={(date) => {
-                            field.onChange(date ? date.toDate() : null)
-                          }}
-                          disabledDate={(current) => {
-                            return current && (current > dayjs() || current < dayjs("1900-01-01"))
-                          }}
+                        <Input 
+                          placeholder="请输入工作量名称" 
+                          {...field} 
+                          className="h-11"
                         />
                       </FormControl>
                       <FormMessage className="empty:hidden" />
@@ -333,149 +244,262 @@ export default function WorkloadSubmitPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="endDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>结束日期</FormLabel>
-                      <FormControl>
-                        <DatePicker
-                          className="w-full"
-                          placeholder="选择日期"
-                          format="YYYY年MM月DD日"
-                          value={field.value ? dayjs(field.value) : null}
-                          onChange={(date) => {
-                            field.onChange(date ? date.toDate() : null)
-                          }}
-                          disabledDate={(current) => {
-                            return current && (current > dayjs() || current < dayjs("1900-01-01"))
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage className="empty:hidden" />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="intensityType"
+                  name="content"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>工作强度类型</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="请选择工作强度类型" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {intensityTypeOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="empty:hidden" />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="intensityValue"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>工作强度值</FormLabel>
+                      <FormLabel className="text-base">工作量内容</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="请输入工作强度值" {...field} />
-                      </FormControl>
-                      <FormMessage className="empty:hidden" />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="image_path"
-                  render={({ field: { value, onChange, ...field } }) => (
-                    <FormItem>
-                      <FormLabel>相关图片</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => onChange(e.target.files?.[0])}
+                        <Textarea
+                          placeholder="请详细描述工作量内容"
+                          className="min-h-[120px] resize-none"
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription>
-                        可选：上传相关图片
-                      </FormDescription>
                       <FormMessage className="empty:hidden" />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="file_path"
-                  render={({ field: { value, onChange, ...field } }) => (
-                    <FormItem>
-                      <FormLabel>相关文件</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="file"
-                          onChange={(e) => onChange(e.target.files?.[0])}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        可选：上传相关文件
-                      </FormDescription>
-                      <FormMessage className="empty:hidden" />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              {isStudent && (
-                <FormField
-                  control={form.control}
-                  name="mentor_reviewer"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>审核导师</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                <div className="grid grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="source"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">工作量来源</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-11">
+                              <SelectValue placeholder="请选择工作量来源" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {sourceOptions.map((option) => (
+                              <SelectItem 
+                                key={option.value} 
+                                value={option.value}
+                                className="cursor-pointer hover:bg-gray-100"
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">工作量类型</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-11">
+                              <SelectValue placeholder="请选择工作量类型" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {typeOptions.map((option) => (
+                              <SelectItem 
+                                key={option.value} 
+                                value={option.value}
+                                className="cursor-pointer hover:bg-gray-100"
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel className="text-base">开始日期</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="请选择审核导师" />
-                          </SelectTrigger>
+                          <DatePicker
+                            className="w-full h-11"
+                            placeholder="选择日期"
+                            format="YYYY年MM月DD日"
+                            value={field.value ? dayjs(field.value) : null}
+                            onChange={(date) => {
+                              field.onChange(date ? date.toDate() : null)
+                            }}
+                            disabledDate={(current) => {
+                              return current && (current > dayjs() || current < dayjs("1900-01-01"))
+                            }}
+                          />
                         </FormControl>
-                        <SelectContent>
-                          {reviewers.map((reviewer) => (
-                            <SelectItem 
-                              key={reviewer.id} 
-                              value={reviewer.id.toString()}
-                            >
-                              {reviewer.username}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="empty:hidden" />
-                    </FormItem>
-                  )}
-                />
-              )}
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="w-full border-2 border-black hover:text-white py-6 text-lg font-medium transition-all"
-              >
-                {isSubmitting ? "提交中..." : "提交"}
-              </Button>
-            </form>
-          </Form>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel className="text-base">结束日期</FormLabel>
+                        <FormControl>
+                          <DatePicker
+                            className="w-full h-11"
+                            placeholder="选择日期"
+                            format="YYYY年MM月DD日"
+                            value={field.value ? dayjs(field.value) : null}
+                            onChange={(date) => {
+                              field.onChange(date ? date.toDate() : null)
+                            }}
+                            disabledDate={(current) => {
+                              return current && (current > dayjs() || current < dayjs("1900-01-01"))
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="intensityType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">工作强度类型</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-11">
+                              <SelectValue placeholder="请选择工作强度类型" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {intensityTypeOptions.map((option) => (
+                              <SelectItem 
+                                key={option.value} 
+                                value={option.value}
+                                className="cursor-pointer hover:bg-gray-100"
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="intensityValue"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">工作强度值</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="请输入工作强度值" 
+                            className="h-11"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="image_path"
+                    render={({ field: { value, onChange, ...field } }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">相关图片</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => onChange(e.target.files?.[0])}
+                            className="h-11 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          可选：上传相关图片
+                        </FormDescription>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="file_path"
+                    render={({ field: { value, onChange, ...field } }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">相关文件</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="file"
+                            onChange={(e) => onChange(e.target.files?.[0])}
+                            className="h-11 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          可选：上传相关文件
+                        </FormDescription>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                {isStudent && (
+                  <FormField
+                    control={form.control}
+                    name="mentor_reviewer"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">审核导师</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-11">
+                              <SelectValue placeholder="请选择审核导师" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {reviewers.map((reviewer) => (
+                              <SelectItem 
+                                key={reviewer.id} 
+                                value={reviewer.id.toString()}
+                                className="cursor-pointer hover:bg-gray-100"
+                              >
+                                {reviewer.username}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="w-full h-12 text-base font-medium bg-red-600 hover:bg-red-500 [&>*]:text-white [&]:text-white transition-colors"
+                >
+                  {isSubmitting ? "提交中..." : "提交工作量"}
+                </Button>
+              </form>
+            </Form>
+          </Card>
         </div>
       </div>
     </ConfigProvider>

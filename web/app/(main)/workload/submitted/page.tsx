@@ -184,200 +184,220 @@ export default function WorkloadSubmittedPage() {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-medium">已提交工作量</h3>
-            <p className="text-sm text-muted-foreground">
-              查看所有已提交的工作量及其审核状态
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="选择状态" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
-                <SelectItem value="pending">待审核</SelectItem>
-                <SelectItem value="mentor_approved">导师已审核</SelectItem>
-                <SelectItem value="teacher_approved">教师已审核</SelectItem>
-                <SelectItem value="mentor_rejected">导师已驳回</SelectItem>
-                <SelectItem value="teacher_rejected">教师已驳回</SelectItem>
-              </SelectContent>
-            </Select>
+    <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6">
+      <div className="space-y-8">
+        <Card className="p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="space-y-1">
+              <h3 className="text-2xl font-semibold tracking-tight">已提交工作量</h3>
+              <p className="text-sm text-muted-foreground">
+                查看所有已提交的工作量及其审核状态
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+              <Select value={selectedStatus} onValueChange={(value) => {
+                setSelectedStatus(value)
+                setCurrentPage(1)
+              }}>
+                <SelectTrigger className="w-full sm:w-[180px] h-10">
+                  <SelectValue placeholder="选择状态" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部状态</SelectItem>
+                  <SelectItem value="pending">待审核</SelectItem>
+                  <SelectItem value="mentor_approved">导师已审核</SelectItem>
+                  <SelectItem value="teacher_approved">教师已审核</SelectItem>
+                  <SelectItem value="mentor_rejected">导师已驳回</SelectItem>
+                  <SelectItem value="teacher_rejected">教师已驳回</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={selectedSource} onValueChange={setSelectedSource}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="选择来源" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部来源</SelectItem>
-                <SelectItem value="horizontal">横向</SelectItem>
-                <SelectItem value="innovation">大创</SelectItem>
-                <SelectItem value="hardware">硬件小组</SelectItem>
-                <SelectItem value="assessment">考核小组</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={selectedSource} onValueChange={(value) => {
+                setSelectedSource(value)
+                setCurrentPage(1)
+              }}>
+                <SelectTrigger className="w-full sm:w-[180px] h-10">
+                  <SelectValue placeholder="选择来源" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部来源</SelectItem>
+                  <SelectItem value="horizontal">横向</SelectItem>
+                  <SelectItem value="innovation">大创</SelectItem>
+                  <SelectItem value="hardware">硬件小组</SelectItem>
+                  <SelectItem value="assessment">考核小组</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>工作量名称</TableHead>
-                <TableHead>来源</TableHead>
-                <TableHead>类型</TableHead>
-                <TableHead>开始日期</TableHead>
-                <TableHead>结束日期</TableHead>
-                <TableHead>强度类型</TableHead>
-                <TableHead>强度值</TableHead>
-                {isStudent && <TableHead>导师审核人</TableHead>}
-                <TableHead>教师审核人</TableHead>
-                <TableHead>状态</TableHead>
-                <TableHead className="text-right">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={isStudent ? 11 : 10} className="text-center py-10">
-                    加载中...
-                  </TableCell>
+
+          <div className="rounded-lg border shadow-sm">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead className="font-semibold">工作量名称</TableHead>
+                  <TableHead className="font-semibold">来源</TableHead>
+                  <TableHead className="font-semibold">类型</TableHead>
+                  <TableHead className="font-semibold">开始日期</TableHead>
+                  <TableHead className="font-semibold">结束日期</TableHead>
+                  <TableHead className="font-semibold">强度类型</TableHead>
+                  <TableHead className="font-semibold">强度值</TableHead>
+                  {isStudent && <TableHead className="font-semibold">导师审核人</TableHead>}
+                  <TableHead className="font-semibold">教师审核人</TableHead>
+                  <TableHead className="font-semibold">状态</TableHead>
+                  <TableHead className="text-right font-semibold">操作</TableHead>
                 </TableRow>
-              ) : currentWorkloads.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={isStudent ? 11 : 10} className="text-center py-10">
-                    暂无工作量记录
-                  </TableCell>
-                </TableRow>
-              ) : (
-                currentWorkloads.map((workload) => (
-                  <TableRow key={workload.id}>
-                    <TableCell>{workload.name}</TableCell>
-                    <TableCell>{sourceMap[workload.source]}</TableCell>
-                    <TableCell>{typeMap[workload.work_type]}</TableCell>
-                    <TableCell>{format(new Date(workload.start_date), "yyyy年MM月dd日")}</TableCell>
-                    <TableCell>{format(new Date(workload.end_date), "yyyy年MM月dd日")}</TableCell>
-                    <TableCell>{intensityTypeMap[workload.intensity_type]}</TableCell>
-                    <TableCell>{workload.intensity_value}</TableCell>
-                    {isStudent && <TableCell>{workload.mentor_reviewer?.username || '-'}</TableCell>}
-                    <TableCell>{workload.teacher_reviewer?.username || '-'}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-sm ${
-                        workload.status.includes("approved") 
-                          ? "bg-green-100 text-green-800"
-                          : workload.status.includes("rejected")
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}>
-                        {statusMap[workload.status]}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.push(`/workload/${workload.id}`)}
-                        title="查看详情"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {isEditable(workload.status) && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => router.push(`/workload/${workload.id}/edit`)}
-                            title="修改"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-red-500 hover:text-red-600"
-                                title="删除"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>确认删除</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  确定要删除这条工作量记录吗？此操作无法撤销。
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>取消</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(workload.id)}
-                                  className="bg-red-500 hover:bg-red-600"
-                                >
-                                  删除
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </>
-                      )}
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={isStudent ? 11 : 10} className="h-32 text-center">
+                      <div className="flex items-center justify-center text-muted-foreground">
+                        加载中...
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : currentWorkloads.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={isStudent ? 11 : 10} className="h-32 text-center">
+                      <div className="flex flex-col items-center justify-center text-muted-foreground">
+                        <p>暂无工作量记录</p>
+                        <p className="text-sm">请提交新的工作量</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  currentWorkloads.map((workload) => (
+                    <TableRow key={workload.id} className="hover:bg-gray-50">
+                      <TableCell className="font-medium">{workload.name}</TableCell>
+                      <TableCell>{sourceMap[workload.source]}</TableCell>
+                      <TableCell>{typeMap[workload.work_type]}</TableCell>
+                      <TableCell>{format(new Date(workload.start_date), "yyyy年MM月dd日")}</TableCell>
+                      <TableCell>{format(new Date(workload.end_date), "yyyy年MM月dd日")}</TableCell>
+                      <TableCell>{intensityTypeMap[workload.intensity_type]}</TableCell>
+                      <TableCell>{workload.intensity_value}</TableCell>
+                      {isStudent && <TableCell>{workload.mentor_reviewer?.username || '-'}</TableCell>}
+                      <TableCell>{workload.teacher_reviewer?.username || '-'}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                          workload.status.includes("approved") 
+                            ? "bg-green-50 text-green-700 ring-1 ring-green-600/20"
+                            : workload.status.includes("rejected")
+                            ? "bg-red-50 text-red-700 ring-1 ring-red-600/20"
+                            : "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20"
+                        }`}>
+                          {statusMap[workload.status]}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => router.push(`/workload/${workload.id}`)}
+                          className="h-8 w-8 hover:bg-gray-100"
+                          title="查看详情"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {isEditable(workload.status) && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => router.push(`/workload/${workload.id}/edit`)}
+                              className="h-8 w-8 hover:bg-gray-100"
+                              title="修改"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 hover:bg-red-100 text-red-500 hover:text-red-600"
+                                  title="删除"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>确认删除</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    确定要删除这条工作量记录吗？此操作无法撤销。
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="hover:bg-gray-100">取消</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(workload.id)}
+                                    className="bg-red-500 hover:bg-red-600 text-white"
+                                  >
+                                    删除
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
 
-          {/* 分页控件 */}
-          {!isLoading && filteredWorkloads.length > 0 && (
-            <div className="flex items-center justify-between px-4 py-4 border-t">
-              <div className="text-sm text-gray-500">
-                共 {filteredWorkloads.length} 条记录
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(1)}
-                  disabled={currentPage === 1}
-                >
-                  首页
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  上一页
-                </Button>
-                <div className="text-sm">
-                  第 {currentPage} / {totalPages} 页
+            {/* 分页控件 */}
+            {!isLoading && filteredWorkloads.length > 0 && (
+              <div className="flex items-center justify-between px-4 py-4 border-t bg-white">
+                <div className="text-sm text-gray-500">
+                  共 {filteredWorkloads.length} 条记录
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  下一页
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={currentPage === totalPages}
-                >
-                  末页
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(1)}
+                    disabled={currentPage === 1}
+                    className="h-8 px-3 text-xs"
+                  >
+                    首页
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="h-8 px-3 text-xs"
+                  >
+                    上一页
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    第 {currentPage} / {totalPages} 页
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 px-3 text-xs"
+                  >
+                    下一页
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 px-3 text-xs"
+                  >
+                    末页
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   )
