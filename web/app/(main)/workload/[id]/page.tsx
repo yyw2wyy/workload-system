@@ -54,6 +54,11 @@ type Workload = {
   intensity_value: number
   image_path: string | null
   file_path: string | null
+  submitter: {
+    id: number
+    username: string
+    role: string
+  }
   mentor_reviewer: {
     id: number
     username: string
@@ -279,11 +284,9 @@ export default function WorkloadDetailPage({
               </div>
             </div>
 
-            {isStudent && (
+            {/* 导师审核信息 */}
+            {workload.submitter?.role === 'student' && (
               <>
-                <Separator />
-
-                {/* 导师审核信息 */}
                 <div className="space-y-4">
                   <Label className="text-base font-semibold">导师审核</Label>
                   <div className="grid grid-cols-2 gap-4">
@@ -307,10 +310,10 @@ export default function WorkloadDetailPage({
                     </div>
                   </div>
                 </div>
+
+                <Separator />
               </>
             )}
-
-            <Separator />
 
             {/* 教师审核信息 */}
             <div className="space-y-4">
