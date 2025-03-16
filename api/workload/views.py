@@ -75,15 +75,13 @@ class WorkloadViewSet(viewsets.ModelViewSet):
                 mentor_reviewer=user,
                 submitter__role='student'
             ).filter(
-                Q(status='pending') |  # 待审核的工作量
-                Q(status='mentor_rejected')  # 被导师驳回的工作量
+                Q(status='pending') # 待审核的工作量
             )
         elif user.role == 'teacher':
             # 教师获取所有需要教师审核的工作量
             queryset = Workload.objects.filter(
                 Q(status='mentor_approved') |  # 导师已审核通过的工作量
-                Q(submitter__role='mentor', status='pending') |  # 导师提交的待审核工作量
-                Q(status='teacher_rejected')  # 被教师驳回的工作量
+                Q(submitter__role='mentor', status='pending')  # 导师提交的待审核工作量
             )
         else:
             return Response(
