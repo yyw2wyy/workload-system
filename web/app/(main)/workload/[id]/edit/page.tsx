@@ -625,7 +625,7 @@ export default function WorkloadEditPage({
                     >
                       取消
                     </Button>
-                    <Button type="submit">保存修改</Button>
+                    <Button type="submit">保存并重新提交</Button>
                   </div>
                 </form>
               </Form>
