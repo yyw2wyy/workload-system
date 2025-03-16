@@ -103,9 +103,13 @@ class WorkloadViewSet(viewsets.ModelViewSet):
                 mentor_reviewer=user,
                 submitter__role='student'
             ).exclude(status='pending')
+        elif user.role == 'teacher':
+            # 教师获取所有已审核的工作量
+            queryset = Workload.objects.filter(
+                teacher_reviewer=user)
         else:
             return Response(
-                {"detail": "只有导师可以查看已审核工作量列表"},
+                {"detail": "只有导师和教师可以查看已审核工作量列表"},
                 status=status.HTTP_403_FORBIDDEN
             )
         

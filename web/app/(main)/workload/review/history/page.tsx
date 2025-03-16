@@ -233,10 +233,16 @@ export default function WorkloadReviewHistoryPage() {
                       {format(new Date(workload.end_date), "yyyy年MM月dd日")}
                     </TableCell>
                     <TableCell>
-                      {workload.mentor_review_time && format(
-                        new Date(workload.mentor_review_time),
-                        "yyyy年MM月dd日 HH:mm:ss"
-                      )}
+                      {user?.role === "teacher" 
+                        ? (workload.teacher_review_time && format(
+                            new Date(workload.teacher_review_time),
+                            "yyyy年MM月dd日 HH:mm:ss"
+                          ))
+                        : (workload.mentor_review_time && format(
+                            new Date(workload.mentor_review_time),
+                            "yyyy年MM月dd日 HH:mm:ss"
+                          ))
+                      }
                     </TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-sm ${
