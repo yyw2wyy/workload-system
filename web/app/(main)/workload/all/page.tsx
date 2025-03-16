@@ -87,6 +87,7 @@ export default function WorkloadAllPage() {
   const [submitters, setSubmitters] = useState<{ id: number; username: string }[]>([])
   const [selectedSubmitter, setSelectedSubmitter] = useState<string | undefined>(undefined)
   const [selectedSource, setSelectedSource] = useState<string | undefined>(undefined)
+  const [selectedStatus, setSelectedStatus] = useState<string>("all")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -143,9 +144,14 @@ export default function WorkloadAllPage() {
     if (selectedSource && selectedSource !== "all") {
       filtered = filtered.filter(w => w.source === selectedSource)
     }
+
+    if (selectedStatus !== "all") {
+      filtered = filtered.filter(w => w.status === selectedStatus)
+    }
     
     setFilteredWorkloads(filtered)
-  }, [workloads, selectedSubmitter, selectedSource])
+    setCurrentPage(1) // 重置页码到第一页
+  }, [workloads, selectedSubmitter, selectedSource, selectedStatus])
 
   // 计算分页数据
   const totalPages = Math.ceil(filteredWorkloads.length / itemsPerPage)
@@ -204,6 +210,25 @@ export default function WorkloadAllPage() {
                     {value}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-[200px]">
+            <Select
+              value={selectedStatus}
+              onValueChange={setSelectedStatus}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="选择状态" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部状态</SelectItem>
+                <SelectItem value="pending">待审核</SelectItem>
+                <SelectItem value="mentor_approved">导师已审核</SelectItem>
+                <SelectItem value="teacher_approved">教师已审核</SelectItem>
+                <SelectItem value="mentor_rejected">导师已驳回</SelectItem>
+                <SelectItem value="teacher_rejected">教师已驳回</SelectItem>
               </SelectContent>
             </Select>
           </div>
