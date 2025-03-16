@@ -9,6 +9,13 @@ import { ChevronDown, ChevronRight } from "lucide-react"
 const navigation = [
   { name: "用户中心", href: "/profile" },
   {
+    name: "总览",
+    items: [
+      { name: "所有工作量", href: "/workload/all" },
+    ],
+    roles: ["teacher"], // 只对教师显示
+  },
+  {
     name: "工作量提交",
     items: [
       { name: "提交工作量", href: "/workload/submit" },
