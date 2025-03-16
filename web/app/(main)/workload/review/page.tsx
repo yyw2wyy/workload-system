@@ -13,6 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { useAuthStore } from "@/lib/store/auth"
@@ -74,7 +81,11 @@ export default function WorkloadReviewPage() {
   const router = useRouter()
   const { user } = useAuthStore()
   const [workloads, setWorkloads] = useState<Workload[]>([])
+  const [filteredWorkloads, setFilteredWorkloads] = useState<Workload[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [submitters, setSubmitters] = useState<{ id: number; username: string }[]>([])
+  const [selectedSubmitter, setSelectedSubmitter] = useState<string | undefined>(undefined)
+  const [selectedSource, setSelectedSource] = useState<string | undefined>(undefined)
 
   // 获取待审核工作量列表
   useEffect(() => {
@@ -93,7 +104,17 @@ export default function WorkloadReviewPage() {
         })
         
         console.log("获取待审核工作量列表成功:", response.data)
-        setWorkloads(Array.isArray(response.data) ? response.data : [])
+        const workloadData = Array.isArray(response.data) ? response.data : []
+        setWorkloads(workloadData)
+        setFilteredWorkloads(workloadData)
+
+        // 提取所有不重复的提交人
+        const uniqueSubmitters = Array.from(
+          new Map(
+            workloadData.map(w => [w.submitter.id, w.submitter])
+          ).values()
+        )
+        setSubmitters(uniqueSubmitters)
       } catch (error: any) {
         console.error("获取待审核工作量列表失败:", error)
         
@@ -145,6 +166,21 @@ export default function WorkloadReviewPage() {
     }
   }, [router, user])
 
+  // 筛选工作量
+  useEffect(() => {
+    let filtered = [...workloads]
+    
+    if (selectedSubmitter && selectedSubmitter !== "all") {
+      filtered = filtered.filter(w => w.submitter.id.toString() === selectedSubmitter)
+    }
+    
+    if (selectedSource && selectedSource !== "all") {
+      filtered = filtered.filter(w => w.source === selectedSource)
+    }
+    
+    setFilteredWorkloads(filtered)
+  }, [workloads, selectedSubmitter, selectedSource])
+
   return (
     <div className="container mx-auto py-10">
       <div className="space-y-6">
@@ -153,6 +189,47 @@ export default function WorkloadReviewPage() {
           <p className="text-sm text-muted-foreground">
             查看并审核{user?.role === "mentor" ? "学生" : ""}提交的工作量
           </p>
+        </div>
+
+        {/* 筛选区域 */}
+        <div className="flex space-x-4">
+          <div className="w-[200px]">
+            <Select
+              value={selectedSubmitter}
+              onValueChange={setSelectedSubmitter}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="选择提交人" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部提交人</SelectItem>
+                {submitters.map((submitter) => (
+                  <SelectItem key={submitter.id} value={submitter.id.toString()}>
+                    {submitter.username}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-[200px]">
+            <Select
+              value={selectedSource}
+              onValueChange={setSelectedSource}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="选择工作量来源" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部来源</SelectItem>
+                {Object.entries(sourceMap).map(([key, value]) => (
+                  <SelectItem key={key} value={key}>
+                    {value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Card>
@@ -177,14 +254,14 @@ export default function WorkloadReviewPage() {
                     加载中...
                   </TableCell>
                 </TableRow>
-              ) : workloads.length === 0 ? (
+              ) : filteredWorkloads.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center">
                     暂无待审核的工作量
                   </TableCell>
                 </TableRow>
               ) : (
-                workloads.map((workload) => (
+                filteredWorkloads.map((workload) => (
                   <TableRow key={workload.id}>
                     <TableCell>{workload.name}</TableCell>
                     <TableCell>{workload.submitter.username}</TableCell>
