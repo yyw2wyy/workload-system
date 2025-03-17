@@ -304,7 +304,7 @@ export default function WorkloadReviewPage({ params }: { params: Promise<{ id: s
               <>
                 <Separator className="my-6" />
                 <div className="space-y-6">
-                  <Label className="block text-base font-semibold">原导师审核意见</Label>
+                  <Label className="block text-base font-semibold">导师审核意见</Label>
                   <div className="space-y-2.5">
                     <div className="whitespace-pre-wrap rounded-lg border bg-gray-50/50 p-4 text-base">
                       {workload.mentor_comment}
