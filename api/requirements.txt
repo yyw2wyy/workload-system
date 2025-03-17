@@ -8,8 +8,14 @@ django-cors-headers==4.3.1
 # 认证相关
 djangorestframework-simplejwt==5.3.1
 
-# 数据库驱动
+# 数据库驱动和连接池
 mysqlclient==2.2.4      # MySQL
+django-mysql==4.12.0    # MySQL 增强功能
+django-db-connection-pool==1.2.4  # 数据库连接池
+
+# 缓存支持
+django-redis==5.4.0     # Redis 缓存后端
+redis==5.0.1           # Redis 客户端
 
 # 文件上传和图片处理
 Pillow==10.2.0
@@ -31,4 +37,7 @@ python-dotenv==1.0.1
 bcrypt==4.1.2
 
 # 工具库
-requests==2.31.0 
+requests==2.31.0
+
+# 性能监控
+django-prometheus==2.3.1  # Prometheus 监控集成 

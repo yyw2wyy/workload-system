@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "workload",
     "corsheaders",
+    'django_prometheus',
 ]
 
 MIDDLEWARE = [
@@ -57,6 +58,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = "mysite.urls"
@@ -95,9 +98,46 @@ DATABASES = {
             'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
+        'CONN_MAX_AGE': 60,  # 数据库连接的最大生命周期（秒）
+        'POOL': {
+            'NAME': 'workload_pool',
+            'MAXCONN': 100,  # 连接池最大连接数
+            'MINCONN': 20,   # 连接池最小连接数
+            'IDLE': 50,      # 空闲连接数
+        },
     }
 }
 
+# 缓存配置
+REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1')
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 100,
+                'retry_on_timeout': True,
+            },
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+            'PASSWORD': os.getenv('REDIS_PASSWORD', None),  # Redis 密码，如果有的话
+        },
+        'KEY_PREFIX': 'workload',  # 缓存键前缀
+        'TIMEOUT': 300,  # 缓存过期时间（秒）
+    }
+}
+
+# Redis 会话配置
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+SESSION_COOKIE_AGE = 86400  # 会话有效期为1天
+
+# 设置 Redis 作为默认的缓存后端
+DJANGO_REDIS_IGNORE_EXCEPTIONS = True
+DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -153,6 +193,17 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '30/minute',    # 匿名用户限流
+        'user': '60/minute',    # 认证用户限流
+        'burst': '100/minute',  # 突发请求限流
+    },
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,  # 默认分页大小
 }
 
 # CORS设置
@@ -168,3 +219,35 @@ CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_SECURE = False  # 开发环境设置为False，生产环境应该设置为True
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']  # 添加前端域名
+
+# 性能优化设置
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+ATOMIC_REQUESTS = True  # 自动使用事务
+CONN_MAX_AGE = 60  # 数据库连接最大存活时间
+
+# 日志配置
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'django.log',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
