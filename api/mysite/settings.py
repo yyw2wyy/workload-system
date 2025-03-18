@@ -201,9 +201,7 @@ REST_FRAMEWORK = {
         'anon': '30/minute',    # 匿名用户限流
         'user': '60/minute',    # 认证用户限流
         'burst': '100/minute',  # 突发请求限流
-    },
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,  # 默认分页大小
+    }
 }
 
 # CORS设置
@@ -227,16 +225,32 @@ ATOMIC_REQUESTS = True  # 自动使用事务
 CONN_MAX_AGE = 60  # 数据库连接最大存活时间
 
 # 日志配置
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'simple',
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': 'django.log',
+            'filename': os.path.join(LOG_DIR, 'django.log'),
+            'formatter': 'verbose',
         },
     },
     'root': {
@@ -248,6 +262,11 @@ LOGGING = {
             'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
         },
     },
 }
