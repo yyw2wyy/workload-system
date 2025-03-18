@@ -203,7 +203,16 @@ export default function WorkloadReviewPage({ params }: { params: Promise<{ id: s
         {/* 基本信息卡片 */}
         <Card className="shadow-sm">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl">{workload.name}</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl">{workload.name}</CardTitle>
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/workload/${workload.id}/edit?returnUrl=/workload/review/${workload.id}`)}
+                className="h-9 px-5 text-base hover:bg-gray-100"
+              >
+                修改
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-8">
             {/* 基本信息 */}
