@@ -23,4 +23,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/user/", include("user.urls")),  # 包含user应用的URL配置
     path("api/workload/", include("workload.urls")),  # 包含workload应用的URL配置
+    path("api/announcement/", include("announcement.urls")),  # 添加公告应用的 URL
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

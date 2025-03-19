@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "workload",
     "corsheaders",
     'django_prometheus',
+    "announcement",  # 添加系统公告应用
 ]
 
 MIDDLEWARE = [
