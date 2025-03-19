@@ -74,8 +74,9 @@
         "end_date": "2025-03-15",
         "intensity_type": "daily",
         "intensity_value": 8.0,
-        "image_path": "path/to/image.jpg",
-        "file_path": "path/to/file.pdf",
+        "attachments": "workload_files/student1/1/example.pdf",
+        "attachments_url": "http://example.com/media/workload_files/student1/1/example.pdf",
+        "original_filename": "example.pdf",
         "submitter": {
             "id": 1,
             "username": "student1",
@@ -116,8 +117,7 @@
 | end_date       | date    | 是   | 结束日期（YYYY-MM-DD）                        |
 | intensity_type | string  | 是   | 工作强度类型（total/daily/weekly）            |
 | intensity_value| float   | 是   | 工作强度值                                    |
-| image_path     | string  | 否   | 图片路径                                      |
-| file_path      | string  | 否   | 文件路径                                      |
+| attachments    | file    | 否   | 附件文件（最大10MB）                          |
 | mentor_reviewer_id | integer | 条件 | 导师审核人ID（仅学生提交时必填）             |
 
 ### 3. 获取单个工作量详情
@@ -196,6 +196,21 @@
 | status         | string  | 是   | 审核状态（导师：mentor_approved/mentor_rejected；教师：teacher_approved/teacher_rejected）|
 | mentor_comment | string  | 条件 | 导师审核评论（导师审核时必填）                  |
 | teacher_comment| string  | 条件 | 教师审核评论（教师审核时必填）                  |
+
+## 文件处理说明
+
+1. 文件上传规则：
+   - 支持的文件大小：最大 10MB
+   - 文件存储路径：`workload_files/{username}/{workload_id}/{filename}`
+   - 保留原始文件名，支持中文文件名
+   - 返回字段：
+     - `attachments`: 文件在服务器上的相对路径
+     - `attachments_url`: 文件的完整访问URL
+     - `original_filename`: 原始文件名
+
+2. 文件删除规则：
+   - 删除工作量时自动删除关联的文件
+   - 更新附件时自动删除旧文件
 
 ## 审核规则说明
 
