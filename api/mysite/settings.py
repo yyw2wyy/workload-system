@@ -252,9 +252,12 @@ LOGGING = {
             'formatter': 'simple',
         },
         'file': {
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(LOG_DIR, 'django.log'),
             'formatter': 'verbose',
+            'maxBytes': 500 * 1024 * 1024,  # 500MB
+            'backupCount': 3,  # 保留3个备份文件
+            'encoding': 'utf-8',
         },
     },
     'root': {
