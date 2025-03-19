@@ -52,8 +52,9 @@ type Workload = {
   end_date: string
   intensity_type: keyof typeof intensityTypeMap
   intensity_value: number
-  attachments: string | null // 文件路径
-  attachments_url: string | null // 文件URL
+  attachments: string | null
+  attachments_url: string | null
+  original_filename: string | null
   submitter: {
     id: number
     username: string
@@ -70,10 +71,10 @@ type Workload = {
     role: string
   } | null
   status: keyof typeof statusMap
-  mentor_comment?: string
-  teacher_comment?: string
-  mentor_review_time?: string
-  teacher_review_time?: string
+  mentor_comment: string | null
+  mentor_review_time: string | null
+  teacher_comment: string | null
+  teacher_review_time: string | null
   created_at: string
   updated_at: string
 }
@@ -225,9 +226,9 @@ export default function WorkloadDetailPage({
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-700 hover:underline"
-                      download
+                      download={workload.original_filename || undefined}
                     >
-                      {workload.attachments ? workload.attachments.split('/').pop() : '下载附件'}
+                      {workload.original_filename || '下载附件'}
                     </a>
                   </div>
                 </div>

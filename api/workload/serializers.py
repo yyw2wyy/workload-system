@@ -24,13 +24,14 @@ class WorkloadSerializer(serializers.ModelSerializer):
         required=False
     )
     attachments_url = serializers.SerializerMethodField()
+    original_filename = serializers.SerializerMethodField()
 
     class Meta:
         model = Workload
         fields = [
             'id', 'name', 'content', 'source', 'work_type',
             'start_date', 'end_date', 'intensity_type', 'intensity_value',
-            'attachments', 'attachments_url', 'submitter', 
+            'attachments', 'attachments_url', 'original_filename', 'submitter', 
             'mentor_reviewer', 'mentor_reviewer_id', 'mentor_comment', 'mentor_review_time',
             'teacher_reviewer', 'teacher_comment', 'teacher_review_time',
             'status', 'created_at', 'updated_at'
@@ -47,6 +48,12 @@ class WorkloadSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.attachments.url)
+        return None
+
+    def get_original_filename(self, obj):
+        """获取原始文件名"""
+        if obj.attachments:
+            return os.path.basename(obj.attachments.name)
         return None
 
     def validate(self, data):

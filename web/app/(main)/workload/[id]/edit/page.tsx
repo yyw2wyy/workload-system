@@ -117,8 +117,9 @@ type Workload = {
   end_date: string
   intensity_type: "total" | "daily" | "weekly"
   intensity_value: number
-  attachments: string | null // 文件路径
-  attachments_url: string | null // 文件下载URL
+  attachments: string | null
+  attachments_url: string | null
+  original_filename: string | null
   mentor_reviewer: {
     id: number
     username: string
@@ -633,9 +634,9 @@ export default function WorkloadEditPage({
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-blue-600 hover:text-blue-700 hover:underline"
-                                    download
+                                    download={workload.original_filename || undefined}
                                   >
-                                    {workload.attachments?.split('/').pop() || '下载附件'}
+                                    {workload.original_filename || '下载附件'}
                                   </a>
                                 </div>
                               )}

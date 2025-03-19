@@ -55,6 +55,7 @@ type Workload = {
   intensity_value: number
   attachments: string | null
   attachments_url: string | null
+  original_filename: string | null
   submitter: {
     id: number
     username: string
@@ -262,9 +263,9 @@ export default function WorkloadDetailPage({
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-700 hover:underline"
-                      download
+                      download={workload.original_filename || undefined}
                     >
-                      {workload.attachments?.split('/').pop() || '下载附件'}
+                      {workload.original_filename || '下载附件'}
                     </a>
                   </div>
                 </div>

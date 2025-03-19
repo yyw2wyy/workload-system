@@ -7,7 +7,8 @@ User = get_user_model()
 
 def workload_file_path(instance, filename):
     """生成工作量附件的存储路径"""
-    # 按用户和工作量ID组织文件
+    # 保留原始文件名，按用户和工作量ID组织文件
+    # 如果文件名包含中文，不进行编码处理
     return f'workload_files/{instance.submitter.username}/{instance.id}/{filename}'
 
 class Workload(models.Model):
