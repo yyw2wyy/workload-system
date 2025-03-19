@@ -3,81 +3,20 @@
 import { useEffect, useState, use } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { format } from "date-fns"
-import { ArrowLeft, FileIcon, ImageIcon } from "lucide-react"
+import { ArrowLeft, FileIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
-
-// 工作量来源映射
-const sourceMap = {
-  horizontal: "横向",
-  innovation: "大创",
-  hardware: "硬件小组",
-  assessment: "考核小组",
-}
-
-// 工作类型映射
-const typeMap = {
-  remote: "远程",
-  onsite: "实地",
-}
-
-// 工作强度类型映射
-const intensityTypeMap = {
-  total: "总计",
-  daily: "每天",
-  weekly: "每周",
-}
-
-// 状态映射
-const statusMap = {
-  pending: "待审核",
-  mentor_approved: "导师已审核",
-  teacher_approved: "教师已审核",
-  mentor_rejected: "导师已驳回",
-  teacher_rejected: "教师已驳回",
-}
-
-// 工作量类型定义
-type Workload = {
-  id: number
-  name: string
-  content: string
-  source: keyof typeof sourceMap
-  work_type: keyof typeof typeMap
-  start_date: string
-  end_date: string
-  intensity_type: keyof typeof intensityTypeMap
-  intensity_value: number
-  attachments: string | null
-  attachments_url: string | null
-  original_filename: string | null
-  submitter: {
-    id: number
-    username: string
-    role: string
-  }
-  mentor_reviewer: {
-    id: number
-    username: string
-    role: string
-  } | null
-  teacher_reviewer: {
-    id: number
-    username: string
-    role: string
-  } | null
-  status: keyof typeof statusMap
-  mentor_comment: string | null
-  mentor_review_time: string | null
-  teacher_comment: string | null
-  teacher_review_time: string | null
-  created_at: string
-  updated_at: string
-}
+import { 
+  Workload,
+  sourceMap,
+  typeMap,
+  intensityTypeMap,
+  statusMap
+} from "@/lib/types/workload"
 
 export default function WorkloadDetailPage({
   params,

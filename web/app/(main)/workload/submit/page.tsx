@@ -6,7 +6,6 @@ import { Calendar as CalendarIcon, Upload } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
 import { api } from "@/lib/axios"
 import { DatePicker, ConfigProvider } from "antd"
 import dayjs from "dayjs"
@@ -39,60 +38,14 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-
-const workloadFormSchema = z.object({
-  name: z.string().min(1, "请输入工作量名称"),
-  content: z.string().min(1, "请输入工作量内容"),
-  source: z.string().min(1, "请选择工作量来源"),
-  type: z.string().min(1, "请选择工作量类型"),
-  startDate: z.date({
-    required_error: "请选择开始日期",
-  }),
-  endDate: z.date({
-    required_error: "请选择结束日期",
-  }),
-  intensityType: z.string().min(1, "请选择工作强度类型"),
-  intensityValue: z.string().min(1, "请输入工作强度值"),
-  attachments: z.any().optional(),
-  mentor_reviewer: z.string().optional(),
-}).refine((data) => {
-  if (!data.startDate || !data.endDate) return true
-  return data.endDate >= data.startDate
-}, {
-  message: "结束日期不能早于开始日期",
-  path: ["endDate"],
-})
-
-type WorkloadFormValues = z.infer<typeof workloadFormSchema>
-
-const defaultValues: Partial<WorkloadFormValues> = {
-  name: "",
-  content: "",
-  source: "",
-  type: "",
-  intensityType: "",
-  intensityValue: "",
-  mentor_reviewer: "",
-}
-
-const sourceOptions = [
-  { value: "horizontal", label: "横向" },
-  { value: "innovation", label: "大创" },
-  { value: "hardware", label: "硬件小组" },
-  { value: "assessment", label: "考核小组" },
-]
-
-const typeOptions = [
-  { value: "remote", label: "远程" },
-  { value: "onsite", label: "实地" },
-]
-
-// 工作强度类型选项
-const intensityTypeOptions = [
-  { value: "total", label: "总计" },
-  { value: "daily", label: "每天" },
-  { value: "weekly", label: "每周" },
-]
+import {
+  workloadFormSchema,
+  WorkloadFormValues,
+  defaultFormValues,
+  sourceOptions,
+  typeOptions,
+  intensityTypeOptions
+} from "@/lib/types/workload"
 
 type Reviewer = {
   id: number
@@ -105,7 +58,7 @@ export default function WorkloadSubmitPage() {
   const [isStudent, setIsStudent] = useState(false)
   const form = useForm<WorkloadFormValues>({
     resolver: zodResolver(workloadFormSchema),
-    defaultValues,
+    defaultValues: defaultFormValues,
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -245,7 +198,7 @@ export default function WorkloadSubmitPage() {
       });
       
       // 重置表单并清空文件列表
-      form.reset(defaultValues);
+      form.reset(defaultFormValues);
       setFileList([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';

@@ -1,0 +1,145 @@
+import * as z from "zod"
+
+// 工作量来源映射
+export const sourceMap = {
+  horizontal: "横向",
+  innovation: "大创",
+  hardware: "硬件小组",
+  assessment: "考核小组",
+} as const
+
+// 工作类型映射
+export const typeMap = {
+  remote: "远程",
+  onsite: "实地",
+} as const
+
+// 工作强度类型映射
+export const intensityTypeMap = {
+  total: "总计",
+  daily: "每天",
+  weekly: "每周",
+} as const
+
+// 状态映射
+export const statusMap = {
+  pending: "待审核",
+  mentor_approved: "导师已审核",
+  teacher_approved: "教师已审核",
+  mentor_rejected: "导师已驳回",
+  teacher_rejected: "教师已驳回",
+} as const
+
+// 审核结果选项
+export const reviewOptions = [
+  { value: "approved", label: "通过" },
+  { value: "rejected", label: "拒绝" },
+] as const
+
+// 表单选项
+export const sourceOptions = [
+  { value: "horizontal", label: "横向" },
+  { value: "innovation", label: "大创" },
+  { value: "hardware", label: "硬件小组" },
+  { value: "assessment", label: "考核小组" },
+] as const
+
+export const typeOptions = [
+  { value: "remote", label: "远程" },
+  { value: "onsite", label: "实地" },
+] as const
+
+export const intensityTypeOptions = [
+  { value: "total", label: "总计" },
+  { value: "daily", label: "每天" },
+  { value: "weekly", label: "每周" },
+] as const
+
+// 类型定义
+export type WorkloadSource = keyof typeof sourceMap
+export type WorkloadType = keyof typeof typeMap
+export type IntensityType = keyof typeof intensityTypeMap
+export type WorkloadStatus = keyof typeof statusMap
+export type ReviewOption = typeof reviewOptions[number]
+
+// 工作量类型定义
+export type Workload = {
+  id: number
+  name: string
+  content: string
+  source: WorkloadSource
+  work_type: WorkloadType
+  start_date: string
+  end_date: string
+  intensity_type: IntensityType
+  intensity_value: number
+  attachments: string | null
+  attachments_url: string | null
+  original_filename: string | null
+  submitter: {
+    id: number
+    username: string
+    role: string
+  }
+  mentor_reviewer: {
+    id: number
+    username: string
+    role: string
+  } | null
+  teacher_reviewer: {
+    id: number
+    username: string
+    role: string
+  } | null
+  status: WorkloadStatus
+  mentor_comment: string | null
+  mentor_review_time: string | null
+  teacher_comment: string | null
+  teacher_review_time: string | null
+  created_at: string
+  updated_at: string
+}
+
+// 表单验证模式
+export const workloadFormSchema = z.object({
+  name: z.string().min(1, "请输入工作量名称"),
+  content: z.string().min(1, "请输入工作量内容"),
+  source: z.enum(["horizontal", "innovation", "hardware", "assessment"], {
+    required_error: "请选择工作量来源",
+  }),
+  type: z.enum(["remote", "onsite"], {
+    required_error: "请选择工作类型",
+  }),
+  startDate: z.date({
+    required_error: "请选择开始日期",
+  }),
+  endDate: z.date({
+    required_error: "请选择结束日期",
+  }),
+  intensityType: z.enum(["total", "daily", "weekly"], {
+    required_error: "请选择工作强度类型",
+  }),
+  intensityValue: z.string().min(1, "请输入工作强度值"),
+  attachments: z.any().optional(),
+  mentor_reviewer: z.string().optional(),
+}).refine((data) => {
+  if (!data.startDate || !data.endDate) return true
+  return data.endDate >= data.startDate
+}, {
+  message: "结束日期不能早于开始日期",
+  path: ["endDate"],
+})
+
+// 表单类型定义
+export type WorkloadFormValues = z.infer<typeof workloadFormSchema>
+
+// 表单默认值
+export const defaultFormValues: Partial<WorkloadFormValues> = {
+  name: "",
+  content: "",
+  source: "" as WorkloadSource,
+  type: "" as WorkloadType,
+  intensityType: "" as IntensityType,
+  intensityValue: "",
+  mentor_reviewer: "",
+} 
