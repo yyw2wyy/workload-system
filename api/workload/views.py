@@ -41,20 +41,37 @@ class WorkloadViewSet(viewsets.ModelViewSet):
         """创建工作量时设置提交者"""
         serializer.save()
 
-    def perform_update(self, serializer):
-        """更新工作量时进行权限检查"""
+    def update(self, request, *args, **kwargs):
+        """更新工作量时进行权限和状态检查"""
         instance = self.get_object()
-        if instance.status not in ['pending', 'mentor_rejected', 'teacher_rejected']:
-            return Response(
-                {"detail": "只能修改未审核或审核未通过的工作量"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        user = self.request.user
+        
+        # 重新从数据库获取最新状态
+        instance.refresh_from_db()
+        
+        # 检查工作量当前状态
+        if user.role != 'teacher':  # 只对非教师角色进行状态检查
+            if instance.status not in ['pending', 'mentor_rejected', 'teacher_rejected']:
+                return Response(
+                    {"detail": "只能修改未审核或审核未通过的工作量"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+        # 调用父类的 update 方法
+        serializer = self.get_serializer(instance, data=request.data, partial=kwargs.get('partial', False))
+        serializer.is_valid(raise_exception=True)
         
         # 如果是被驳回的工作量，修改后重置状态为待审核
-        if instance.status in ['mentor_rejected', 'teacher_rejected']:
+        if user.role != 'teacher' and instance.status in ['mentor_rejected', 'teacher_rejected']:
             serializer.save(status='pending')
         else:
             serializer.save()
+
+        return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        """更新工作量的实际操作"""
+        serializer.save()
 
     def perform_destroy(self, instance):
         """删除工作量时进行权限检查"""
