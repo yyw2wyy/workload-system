@@ -143,7 +143,21 @@ export default function WorkloadSubmittedPage() {
 
   useEffect(() => {
     fetchWorkloads()
+
+    // 设置自动刷新定时器，每30秒刷新一次
+    const refreshInterval = setInterval(() => {
+      fetchWorkloads()
+    }, 30000) // 30秒
+
+    // 组件卸载时清除定时器
+    return () => clearInterval(refreshInterval)
   }, [router])
+
+  // 添加手动刷新功能
+  const handleRefresh = () => {
+    setIsLoading(true)
+    fetchWorkloads()
+  }
 
   // 处理删除工作量
   const handleDelete = async (id: number) => {
@@ -195,6 +209,15 @@ export default function WorkloadSubmittedPage() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isLoading}
+                className="h-10"
+              >
+                {isLoading ? "刷新中..." : "刷新"}
+              </Button>
               <Select value={selectedStatus} onValueChange={(value) => {
                 setSelectedStatus(value)
                 setCurrentPage(1)

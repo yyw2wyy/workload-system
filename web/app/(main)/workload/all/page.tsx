@@ -128,10 +128,48 @@ export default function WorkloadAllPage() {
     // 只有教师可以访问此页面
     if (user?.role === "teacher") {
       fetchWorkloads()
+
+      // 设置自动刷新定时器，每30秒刷新一次
+      const refreshInterval = setInterval(() => {
+        fetchWorkloads()
+      }, 30000) // 30秒
+
+      // 组件卸载时清除定时器
+      return () => clearInterval(refreshInterval)
     } else {
       router.push("/")
     }
   }, [router, user])
+
+  // 添加手动刷新功能
+  const handleRefresh = () => {
+    setIsLoading(true)
+    const fetchWorkloads = async () => {
+      try {
+        const response = await api.get("/workload/all_workloads/")
+        const workloadData = Array.isArray(response.data) ? response.data : []
+        setWorkloads(workloadData)
+        setFilteredWorkloads(workloadData)
+
+        // 提取所有不重复的提交人
+        const uniqueSubmitters = Array.from(
+          new Map(
+            workloadData.map(w => [w.submitter.id, w.submitter])
+          ).values()
+        )
+        setSubmitters(uniqueSubmitters)
+      } catch (error: any) {
+        console.error("获取工作量列表失败:", error)
+        toast.error("获取工作量列表失败", {
+          description: error.response?.data?.detail || "请稍后重试",
+          duration: 3000,
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchWorkloads()
+  }
 
   // 筛选工作量
   useEffect(() => {
@@ -176,6 +214,15 @@ export default function WorkloadAllPage() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isLoading}
+                className="h-10"
+              >
+                {isLoading ? "刷新中..." : "刷新"}
+              </Button>
               <Select
                 value={selectedSubmitter}
                 onValueChange={(value) => {
