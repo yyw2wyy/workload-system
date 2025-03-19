@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
+import { Calendar as CalendarIcon, Upload } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -53,8 +53,7 @@ const workloadFormSchema = z.object({
   }),
   intensityType: z.string().min(1, "请选择工作强度类型"),
   intensityValue: z.string().min(1, "请输入工作强度值"),
-  image_path: z.any().optional(),
-  file_path: z.any().optional(),
+  attachments: z.any().optional(),
   mentor_reviewer: z.string().optional(),
 }).refine((data) => {
   if (!data.startDate || !data.endDate) return true
@@ -111,6 +110,8 @@ export default function WorkloadSubmitPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [reviewers, setReviewers] = useState<Reviewer[]>([])
+  const [fileList, setFileList] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 从本地存储获取用户角色
   useEffect(() => {
@@ -140,75 +141,174 @@ export default function WorkloadSubmitPage() {
     fetchReviewers()
   }, [isStudent])
 
+  // 处理文件选择
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      // 检查文件大小（10MB）
+      const isLt10M = file.size / 1024 / 1024 < 10
+      if (!isLt10M) {
+        toast.error("文件过大", {
+          description: "文件大小不能超过10MB",
+          duration: 3000,
+        })
+        return
+      }
+
+      // 检查文件类型
+      const allowedTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ]
+      
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("文件类型不支持", {
+          description: "请上传常见的文档格式或图片格式",
+          duration: 3000,
+        })
+        return
+      }
+
+      setFileList([file])
+    }
+  }
+
+  // 处理文件移除
+  const handleFileRemove = () => {
+    setFileList([])
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
   async function onSubmit(data: WorkloadFormValues) {
     try {
-      setIsSubmitting(true)
+      setIsSubmitting(true);
       
       // 准备表单数据
-      const formData = new FormData()
-      formData.append("name", data.name)
-      formData.append("content", data.content)
-      formData.append("source", data.source)
-      formData.append("work_type", data.type)
-      formData.append("start_date", format(data.startDate, "yyyy-MM-dd"))
-      formData.append("end_date", format(data.endDate, "yyyy-MM-dd"))
-      formData.append("intensity_type", data.intensityType)
-      formData.append("intensity_value", data.intensityValue)
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("content", data.content);
+      formData.append("source", data.source);
+      formData.append("work_type", data.type);
+      formData.append("start_date", format(data.startDate, "yyyy-MM-dd"));
+      formData.append("end_date", format(data.endDate, "yyyy-MM-dd"));
+      formData.append("intensity_type", data.intensityType);
+      formData.append("intensity_value", data.intensityValue);
       
       // 只有学生才需要提供审核导师
       if (isStudent && data.mentor_reviewer) {
-        formData.append("mentor_reviewer_id", data.mentor_reviewer)
+        formData.append("mentor_reviewer_id", data.mentor_reviewer);
       }
 
       // 添加文件（如果有）
-      if (data.image_path) {
-        formData.append("image_path", data.image_path)
+      if (fileList.length > 0) {
+        const file = fileList[0];
+        formData.append("attachments", file, file.name);
       }
-      if (data.file_path) {
-        formData.append("file_path", data.file_path)
-      }
+
+      // 输出FormData内容以供调试
+      console.log("提交的数据：", {
+        name: data.name,
+        content: data.content,
+        source: data.source,
+        work_type: data.type,
+        start_date: format(data.startDate, "yyyy-MM-dd"),
+        end_date: format(data.endDate, "yyyy-MM-dd"),
+        intensity_type: data.intensityType,
+        intensity_value: data.intensityValue,
+        mentor_reviewer_id: isStudent ? data.mentor_reviewer : null,
+        attachments: fileList.length > 0 ? fileList[0].name : null,
+      });
 
       // 调用后端 API
       const response = await api.post("/workload/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      })
+        // 添加超时设置
+        timeout: 60000, // 60秒
+      });
+      
+      // 检查响应
+      console.log("提交成功，响应：", response.data);
       
       toast.success("工作量提交成功", {
         description: "您的工作量已成功提交，等待审核",
         duration: 3000,
-      })
+      });
       
-      // 重置表单并刷新页面
-      form.reset(defaultValues)
-      router.refresh()
+      // 重置表单并清空文件列表
+      form.reset(defaultValues);
+      setFileList([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
     } catch (error: any) {
-      console.error("提交工作量失败:", error)
+      console.error("提交工作量失败:", error);
       
-      // 处理不同类型的错误
+      // 详细记录错误信息
       if (error.response) {
+        console.error("错误响应:", {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data,
+          headers: error.response.headers,
+        });
+        
         // 服务器返回的错误信息
-        const errorMessage = error.response.data.detail || "提交工作量时发生错误，请稍后重试"
+        let errorMessage = "提交工作量时发生错误，请稍后重试";
+        
+        if (error.response.data) {
+          if (typeof error.response.data === 'string') {
+            errorMessage = error.response.data;
+          } else if (error.response.data.detail) {
+            errorMessage = error.response.data.detail;
+          } else if (typeof error.response.data === 'object') {
+            // 处理字段错误
+            const fieldErrors = [];
+            for (const [key, value] of Object.entries(error.response.data)) {
+              fieldErrors.push(`${key}: ${Array.isArray(value) ? value.join(', ') : value}`);
+            }
+            if (fieldErrors.length > 0) {
+              errorMessage = fieldErrors.join('\n');
+            }
+          }
+        }
+        
         toast.error("提交失败", {
           description: errorMessage,
           duration: 5000,
-        })
+        });
       } else if (error.request) {
         // 请求发送失败
+        console.error("请求错误:", {
+          request: error.request,
+          message: error.message,
+        });
+        
         toast.error("提交失败", {
           description: "网络连接错误，请检查您的网络连接",
           duration: 5000,
-        })
+        });
       } else {
         // 其他错误
+        console.error("其他错误:", error.message);
+        
         toast.error("提交失败", {
           description: "提交工作量时发生错误，请稍后重试",
           duration: 5000,
-        })
+        });
       }
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
@@ -415,51 +515,45 @@ export default function WorkloadSubmitPage() {
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="image_path"
-                    render={({ field: { value, onChange, ...field } }) => (
-                      <FormItem>
-                        <FormLabel className="text-base">相关图片</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => onChange(e.target.files?.[0])}
-                            className="h-11 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription className="text-xs">
-                          可选：上传相关图片
-                        </FormDescription>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="file_path"
-                    render={({ field: { value, onChange, ...field } }) => (
-                      <FormItem>
-                        <FormLabel className="text-base">相关文件</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="file"
-                            onChange={(e) => onChange(e.target.files?.[0])}
-                            className="h-11 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription className="text-xs">
-                          可选：上传相关文件
-                        </FormDescription>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormItem>
+                  <FormLabel className="text-base">证明材料</FormLabel>
+                  <FormControl>
+                    <div className="space-y-4">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full"
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        选择文件
+                      </Button>
+                      {fileList.length > 0 && (
+                        <div className="flex items-center justify-between p-2 border rounded-md">
+                          <span className="text-sm truncate">{fileList[0].name}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleFileRemove}
+                          >
+                            移除
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    支持常见的文档格式和图片格式，单个文件大小不超过10MB
+                  </FormDescription>
+                </FormItem>
                 {isStudent && (
                   <FormField
                     control={form.control}
@@ -490,13 +584,15 @@ export default function WorkloadSubmitPage() {
                     )}
                   />
                 )}
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="w-full h-12 text-base font-medium bg-red-600 hover:bg-red-500 [&>*]:text-white [&]:text-white transition-colors"
-                >
-                  {isSubmitting ? "提交中..." : "提交工作量"}
-                </Button>
+                <div className="flex justify-end space-x-4">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-[120px] border border-red-600"
+                  >
+                    {isSubmitting ? "提交中..." : "提交"}
+                  </Button>
+                </div>
               </form>
             </Form>
           </Card>

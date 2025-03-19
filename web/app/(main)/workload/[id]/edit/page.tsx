@@ -16,6 +16,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -80,8 +81,7 @@ const formSchema = z
       .min(0.1, "工作强度必须大于0")
       .max(24, "工作强度不能超过24"),
     mentor_reviewer_id: z.string().optional(),
-    image: z.any().optional(),
-    file: z.any().optional(),
+    attachments: z.instanceof(File).optional(),
   })
   .superRefine((data, ctx) => {
     // 验证结束日期不早于开始日期
@@ -117,8 +117,8 @@ type Workload = {
   end_date: string
   intensity_type: "total" | "daily" | "weekly"
   intensity_value: number
-  image_path: string | null
-  file_path: string | null
+  attachments: string | null // 文件路径
+  attachments_url: string | null // 文件下载URL
   mentor_reviewer: {
     id: number
     username: string
@@ -215,6 +215,9 @@ export default function WorkloadEditPage({
           intensity_value: workload.intensity_value,
           mentor_reviewer_id: workload.mentor_reviewer?.id.toString() || "",
         })
+
+        // 设置工作量数据
+        setWorkload(workload)
       } catch (error: any) {
         console.error("获取数据失败:", error)
         
@@ -256,11 +259,8 @@ export default function WorkloadEditPage({
       }
 
       // 添加文件（如果有）
-      if (values.image?.[0]) {
-        formData.append("image", values.image[0])
-      }
-      if (values.file?.[0]) {
-        formData.append("file", values.file[0])
+      if (values.attachments) {
+        formData.append("attachments", values.attachments)
       }
 
       await api.put(`/workload/${resolvedParams.id}/`, formData, {
@@ -578,44 +578,72 @@ export default function WorkloadEditPage({
                   <div className="space-y-6">
                     <FormField
                       control={form.control}
-                      name="image"
+                      name="attachments"
                       render={({ field: { value, onChange, ...field } }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-gray-500">图片上传</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-500">证明材料</FormLabel>
                           <FormControl>
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0]
-                                onChange(file)
-                              }}
-                              className="h-10 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage className="empty:hidden" />
-                        </FormItem>
-                      )}
-                    />
+                            <div className="space-y-4">
+                              <Input
+                                type="file"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) {
+                                    // 检查文件大小（10MB）
+                                    const isLt10M = file.size / 1024 / 1024 < 10
+                                    if (!isLt10M) {
+                                      toast.error("文件过大", {
+                                        description: "文件大小不能超过10MB",
+                                        duration: 3000,
+                                      })
+                                      return
+                                    }
 
-                    <FormField
-                      control={form.control}
-                      name="file"
-                      render={({ field: { value, onChange, ...field } }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium text-gray-500">文件上传</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="file"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0]
-                                onChange(file)
-                              }}
-                              className="h-10 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-                              {...field}
-                            />
+                                    // 检查文件类型
+                                    const allowedTypes = [
+                                      'image/jpeg',
+                                      'image/png',
+                                      'image/gif',
+                                      'application/pdf',
+                                      'application/msword',
+                                      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                      'application/vnd.ms-excel',
+                                      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                                    ]
+                                    
+                                    if (!allowedTypes.includes(file.type)) {
+                                      toast.error("文件类型不支持", {
+                                        description: "请上传常见的文档格式或图片格式",
+                                        duration: 3000,
+                                      })
+                                      return
+                                    }
+
+                                    onChange(file)
+                                  }
+                                }}
+                                className="h-10 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                                {...field}
+                              />
+                              {workload?.attachments_url && (
+                                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                  <span>当前文件：</span>
+                                  <a
+                                    href={workload.attachments_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-700 hover:underline"
+                                    download
+                                  >
+                                    {workload.attachments?.split('/').pop() || '下载附件'}
+                                  </a>
+                                </div>
+                              )}
+                            </div>
                           </FormControl>
+                          <FormDescription>
+                            支持常见的文档格式和图片格式，单个文件大小不超过10MB
+                          </FormDescription>
                           <FormMessage className="empty:hidden" />
                         </FormItem>
                       )}

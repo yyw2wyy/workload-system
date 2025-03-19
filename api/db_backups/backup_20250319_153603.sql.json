@@ -1,0 +1,12 @@
+{
+  "database": "workload_db",
+  "timestamp": "20250319_153603",
+  "django_migrations": {
+    "contenttypes": "0002_remove_content_type_name",
+    "auth": "0012_alter_user_first_name_max_length",
+    "user": "0001_initial",
+    "admin": "0003_logentry_add_action_flag_choices",
+    "sessions": "0001_initial",
+    "workload": "0002_remove_workload_reviewer_workload_mentor_review_time_and_more"
+  }
+}

@@ -52,8 +52,8 @@ type Workload = {
   end_date: string
   intensity_type: keyof typeof intensityTypeMap
   intensity_value: number
-  image_path: string | null
-  file_path: string | null
+  attachments: string | null // 文件路径
+  attachments_url: string | null // 文件URL
   submitter: {
     id: number
     username: string
@@ -215,35 +215,19 @@ export default function WorkloadDetailPage({
 
             {/* 附件 */}
             <div className="space-y-6">
-              {workload.image_path && (
+              {workload.attachments_url && (
                 <div className="space-y-2.5">
-                  <Label className="text-sm font-medium text-gray-500">图片附件</Label>
-                  <div className="flex items-center space-x-2">
-                    <ImageIcon className="h-4 w-4 text-gray-500" />
-                    <a
-                      href={workload.image_path}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 hover:underline"
-                    >
-                      查看图片
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {workload.file_path && (
-                <div className="space-y-2.5">
-                  <Label className="text-sm font-medium text-gray-500">文件附件</Label>
+                  <Label className="text-sm font-medium text-gray-500">证明材料</Label>
                   <div className="flex items-center space-x-2">
                     <FileIcon className="h-4 w-4 text-gray-500" />
                     <a
-                      href={workload.file_path}
+                      href={workload.attachments_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-700 hover:underline"
+                      download
                     >
-                      下载文件
+                      {workload.attachments ? workload.attachments.split('/').pop() : '下载附件'}
                     </a>
                   </div>
                 </div>

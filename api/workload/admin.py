@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 from .models import Workload
 
 @admin.register(Workload)
@@ -12,7 +13,7 @@ class WorkloadAdmin(admin.ModelAdmin):
         'teacher_reviewer__username'
     ]
     date_hierarchy = 'created_at'
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at', 'preview_attachments']
     
     fieldsets = (
         ('基本信息', {
@@ -22,7 +23,7 @@ class WorkloadAdmin(admin.ModelAdmin):
             'fields': ('intensity_type', 'intensity_value')
         }),
         ('证明材料', {
-            'fields': ('image_path', 'file_path')
+            'fields': ('attachments', 'preview_attachments')
         }),
         ('关联用户', {
             'fields': ('submitter', 'mentor_reviewer', 'teacher_reviewer')
@@ -39,3 +40,38 @@ class WorkloadAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    def preview_attachments(self, obj):
+        """预览附件"""
+        if not obj.attachments:
+            return '无附件'
+        
+        file_url = obj.attachments.url
+        file_name = obj.attachments.name.split('/')[-1]
+        
+        # 判断文件类型
+        if file_name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+            # 图片预览
+            return format_html(
+                '<div style="margin: 10px 0;">'
+                '<img src="{}" style="max-width: 300px; max-height: 150px; border-radius: 5px; margin-bottom: 10px;"><br>'
+                '<a href="{}" class="button" target="_blank" '
+                'style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #ddd; '
+                'border-radius: 3px; color: #666; text-decoration: none;">'
+                '下载原图</a>'
+                '</div>',
+                file_url, file_url
+            )
+        else:
+            # 其他文件类型显示下载链接
+            return format_html(
+                '<div style="margin: 10px 0;">'
+                '<a href="{}" class="button" target="_blank" '
+                'style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #ddd; '
+                'border-radius: 3px; color: #666; text-decoration: none;">'
+                '下载文件: {}</a>'
+                '</div>',
+                file_url, file_name
+            )
+    
+    preview_attachments.short_description = '附件预览'

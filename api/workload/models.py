@@ -1,8 +1,14 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
+import os
 
 User = get_user_model()
+
+def workload_file_path(instance, filename):
+    """生成工作量附件的存储路径"""
+    # 按用户和工作量ID组织文件
+    return f'workload_files/{instance.submitter.username}/{instance.id}/{filename}'
 
 class Workload(models.Model):
     """工作量模型"""
@@ -50,8 +56,14 @@ class Workload(models.Model):
     intensity_value = models.FloatField('工作强度值', validators=[MinValueValidator(0.0)])
     
     # 证明材料
-    image_path = models.CharField('图片路径', max_length=500, blank=True, null=True)
-    file_path = models.CharField('文件路径', max_length=500, blank=True, null=True)
+    attachments = models.FileField(
+        '附件',
+        upload_to=workload_file_path,
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text='支持上传图片、文档等文件'
+    )
     
     # 关联用户
     submitter = models.ForeignKey(
@@ -116,3 +128,40 @@ class Workload(models.Model):
         
         if self.teacher_reviewer and self.teacher_reviewer.role != 'teacher':
             raise ValidationError('教师审核人必须是教师角色')
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        # 如果是新创建的记录，确保ID不使用固定值，而是自动生成
+        if self.pk and not Workload.objects.filter(pk=self.pk).exists():
+            # 如果指定了ID但不存在，清除ID让数据库自动生成
+            self.pk = None
+            
+        # 如果是新创建的记录
+        if not self.pk:
+            # 先保存以获取ID
+            super().save(*args, **kwargs)
+            
+            # 如果有附件，重新保存以使用正确的文件路径
+            if self.attachments:
+                try:
+                    old_path = self.attachments.path
+                    filename = os.path.basename(old_path)
+                    new_path = workload_file_path(self, filename)
+                    # 更新文件路径
+                    self.attachments.name = new_path
+                    super().save(update_fields=['attachments'], *args, **kwargs)
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).error(f"处理附件时出错: {e}")
+        else:
+            super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # 删除关联的文件
+        if self.attachments:
+            try:
+                if os.path.isfile(self.attachments.path):
+                    os.remove(self.attachments.path)
+            except Exception as e:
+                print(f"删除文件失败: {e}")
+        super().delete(*args, **kwargs)

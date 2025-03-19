@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import Workload
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+import os
+import logging
 
 User = get_user_model()
 
@@ -21,13 +23,14 @@ class WorkloadSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False
     )
+    attachments_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Workload
         fields = [
             'id', 'name', 'content', 'source', 'work_type',
             'start_date', 'end_date', 'intensity_type', 'intensity_value',
-            'image_path', 'file_path', 'submitter', 
+            'attachments', 'attachments_url', 'submitter', 
             'mentor_reviewer', 'mentor_reviewer_id', 'mentor_comment', 'mentor_review_time',
             'teacher_reviewer', 'teacher_comment', 'teacher_review_time',
             'status', 'created_at', 'updated_at'
@@ -37,6 +40,14 @@ class WorkloadSerializer(serializers.ModelSerializer):
             'mentor_review_time', 'teacher_review_time',
             'created_at', 'updated_at'
         ]
+
+    def get_attachments_url(self, obj):
+        """获取附件的URL"""
+        if obj.attachments:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.attachments.url)
+        return None
 
     def validate(self, data):
         """验证数据"""
@@ -48,22 +59,66 @@ class WorkloadSerializer(serializers.ModelSerializer):
         if request.user.role == 'student' and not data.get('mentor_reviewer_id'):
             raise serializers.ValidationError("学生提交工作量时必须指定导师")
 
+        # 验证文件大小
+        attachments = data.get('attachments')
+        if attachments:
+            if attachments.size > 10 * 1024 * 1024:  # 10MB
+                raise serializers.ValidationError({
+                    "attachments": "文件大小不能超过10MB"
+                })
+
         return data
 
     def create(self, validated_data):
         """创建工作量时设置提交者和审核者"""
         mentor_reviewer = validated_data.pop('mentor_reviewer_id', None)
-        validated_data['submitter'] = self.context['request'].user
+        submitter = self.context['request'].user
+        
+        # 如果指定了ID但数据库中已存在相同ID的记录，则移除ID让数据库自动生成
+        if 'id' in validated_data and Workload.objects.filter(id=validated_data['id']).exists():
+            # 记录警告日志
+            logger = logging.getLogger(__name__)
+            logger.warning(f"尝试创建ID为 {validated_data['id']} 的工作量但已存在，将移除ID让数据库自动生成")
+            
+            # 删除已存在的ID，让数据库自动生成
+            validated_data.pop('id', None)
+        
         if mentor_reviewer:
             validated_data['mentor_reviewer'] = mentor_reviewer
-        return super().create(validated_data)
+        
+        try:
+            # 创建工作量记录
+            instance = super().create({**validated_data, 'submitter': submitter})
+            return instance
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error(f"创建工作量时出错: {str(e)}")
+            raise
 
     def update(self, instance, validated_data):
         """更新工作量时设置审核者"""
         if 'mentor_reviewer_id' in validated_data:
             mentor_reviewer = validated_data.pop('mentor_reviewer_id')
             validated_data['mentor_reviewer'] = mentor_reviewer
-        return super().update(instance, validated_data)
+
+        # 如果更新了附件，删除旧文件
+        if 'attachments' in validated_data and instance.attachments:
+            try:
+                old_file = instance.attachments.path
+                if os.path.exists(old_file):
+                    os.remove(old_file)
+            except Exception as e:
+                print(f"删除旧文件失败: {e}")
+
+        # 更新工作量记录
+        instance = super().update(instance, validated_data)
+
+        # 如果有新附件，确保目录存在
+        if instance.attachments:
+            directory = os.path.dirname(instance.attachments.path)
+            os.makedirs(directory, exist_ok=True)
+
+        return instance
 
 class WorkloadReviewSerializer(serializers.ModelSerializer):
     """工作量审核序列化器"""

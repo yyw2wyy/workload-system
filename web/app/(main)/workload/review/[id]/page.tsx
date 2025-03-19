@@ -17,7 +17,7 @@ import {
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { useAuthStore } from "@/lib/store/auth"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Download } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { ImageIcon, FileIcon } from "lucide-react"
 
@@ -67,8 +67,8 @@ type Workload = {
   end_date: string
   intensity_type: keyof typeof intensityTypeMap
   intensity_value: number
-  image_path: string | null
-  file_path: string | null
+  attachments: string | null
+  attachments_url: string | null
   submitter: {
     id: number
     username: string
@@ -248,48 +248,30 @@ export default function WorkloadReviewPage({ params }: { params: Promise<{ id: s
             {/* 工作内容 */}
             <div className="space-y-2.5">
               <Label className="text-sm font-medium text-gray-500">工作内容</Label>
-              <div className="whitespace-pre-wrap rounded-lg border bg-gray-50/50 p-4 text-base">
-                {workload.content}
-              </div>
+              <div className="text-base whitespace-pre-wrap">{workload.content}</div>
             </div>
 
             <Separator className="my-6" />
 
-            {/* 附件 */}
-            <div className="space-y-6">
-              {workload.image_path && (
-                <div className="space-y-2.5">
-                  <Label className="text-sm font-medium text-gray-500">图片附件</Label>
-                  <div className="flex items-center space-x-2">
-                    <ImageIcon className="h-4 w-4 text-gray-500" />
-                    <a
-                      href={workload.image_path}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 hover:underline"
-                    >
-                      查看图片
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {workload.file_path && (
-                <div className="space-y-2.5">
-                  <Label className="text-sm font-medium text-gray-500">文件附件</Label>
-                  <div className="flex items-center space-x-2">
-                    <FileIcon className="h-4 w-4 text-gray-500" />
-                    <a
-                      href={workload.file_path}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 hover:underline"
-                    >
-                      下载文件
-                    </a>
-                  </div>
-                </div>
-              )}
+            {/* 证明材料 */}
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium text-gray-500">证明材料</Label>
+              <div className="flex items-center space-x-4">
+                {workload.attachments_url ? (
+                  <a
+                    href={workload.attachments_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                    className="inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>{workload.attachments ? workload.attachments.split('/').pop() : '下载附件'}</span>
+                  </a>
+                ) : (
+                  <div className="text-gray-500">无附件</div>
+                )}
+              </div>
             </div>
 
             <Separator className="my-6" />
