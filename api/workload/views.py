@@ -3,6 +3,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
+from django.http import HttpResponse
 from .models import Workload
 from .serializers import WorkloadSerializer, WorkloadReviewSerializer
 import logging
@@ -10,6 +11,9 @@ import traceback
 import os
 import django.db.utils
 import re
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill
+from datetime import datetime
 
 # 获取logger
 logger = logging.getLogger(__name__)
@@ -285,3 +289,102 @@ class WorkloadViewSet(viewsets.ModelViewSet):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
+    @action(detail=False, methods=['post'])
+    def export(self, request):
+        """导出选中的工作量为Excel文件"""
+        user = request.user
+        if user.role != 'teacher':
+            return Response(
+                {"detail": "只有教师可以导出工作量"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        try:
+            # 获取要导出的工作量ID列表
+            workload_ids = request.data.get('workload_ids', [])
+            if not workload_ids:
+                return Response(
+                    {"detail": "请选择要导出的工作量"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # 获取工作量数据
+            workloads = Workload.objects.filter(id__in=workload_ids)
+            if not workloads:
+                return Response(
+                    {"detail": "未找到指定的工作量"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # 创建Excel工作簿
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "工作量记录"
+
+            # 设置表头样式
+            header_font = Font(bold=True)
+            header_fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+            header_alignment = Alignment(horizontal='center', vertical='center')
+
+            # 设置表头
+            headers = [
+                '提交人', '工作量名称', '工作量内容', '工作来源', '工作类型',
+                '开始日期', '结束日期', '工作强度类型', '工作强度值', '状态',
+                '导师评语', '导师审核时间', '教师评语', '教师审核时间',
+                '创建时间'
+            ]
+            for col, header in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col, value=header)
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = header_alignment
+
+            # 写入数据
+            for row, workload in enumerate(workloads, 2):
+                ws.cell(row=row, column=1, value=workload.submitter.username)
+                ws.cell(row=row, column=2, value=workload.name)
+                ws.cell(row=row, column=3, value=workload.content)
+                ws.cell(row=row, column=4, value=workload.get_source_display())
+                ws.cell(row=row, column=5, value=workload.get_work_type_display())
+                ws.cell(row=row, column=6, value=workload.start_date.strftime('%Y-%m-%d'))
+                ws.cell(row=row, column=7, value=workload.end_date.strftime('%Y-%m-%d'))
+                ws.cell(row=row, column=8, value=workload.get_intensity_type_display())
+                ws.cell(row=row, column=9, value=workload.intensity_value)
+                ws.cell(row=row, column=10, value=workload.get_status_display())
+                ws.cell(row=row, column=11, value=workload.mentor_comment)
+                ws.cell(row=row, column=12, value=workload.mentor_review_time.strftime('%Y-%m-%d %H:%M:%S') if workload.mentor_review_time else '')
+                ws.cell(row=row, column=13, value=workload.teacher_comment)
+                ws.cell(row=row, column=14, value=workload.teacher_review_time.strftime('%Y-%m-%d %H:%M:%S') if workload.teacher_review_time else '')
+                ws.cell(row=row, column=15, value=workload.created_at.strftime('%Y-%m-%d %H:%M:%S'))
+
+            # 调整列宽
+            for column in ws.columns:
+                max_length = 0
+                column = list(column)
+                for cell in column:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+                adjusted_width = (max_length + 2)
+                ws.column_dimensions[column[0].column_letter].width = adjusted_width
+
+            # 创建响应
+            response = HttpResponse(
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = f'attachment; filename=workload_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+
+            # 保存文件
+            wb.save(response)
+            return response
+
+        except Exception as e:
+            logger.error(f"导出工作量失败: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response(
+                {"detail": f"导出失败: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

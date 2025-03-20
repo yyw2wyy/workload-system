@@ -24,6 +24,7 @@ import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { useAuthStore } from "@/lib/store/auth"
 import { sourceMap, typeMap, statusMap } from "@/lib/types/workload"
+import { Checkbox } from "@/components/ui/checkbox"
 
 
 type Workload = {
@@ -68,6 +69,8 @@ export default function WorkloadAllPage() {
   const [selectedSource, setSelectedSource] = useState<string | undefined>(undefined)
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedWorkloads, setSelectedWorkloads] = useState<number[]>([])
+  const [isDownloading, setIsDownloading] = useState(false)
   const itemsPerPage = 10
 
   // 获取所有工作量列表
@@ -181,6 +184,58 @@ export default function WorkloadAllPage() {
     setCurrentPage(page)
   }
 
+  // 处理全选/取消全选
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedWorkloads(currentWorkloads.map(w => w.id))
+    } else {
+      setSelectedWorkloads([])
+    }
+  }
+
+  // 处理单个工作量选择
+  const handleSelectWorkload = (id: number, checked: boolean) => {
+    if (checked) {
+      setSelectedWorkloads(prev => [...prev, id])
+    } else {
+      setSelectedWorkloads(prev => prev.filter(workloadId => workloadId !== id))
+    }
+  }
+
+  // 处理下载
+  const handleDownload = async () => {
+    if (selectedWorkloads.length === 0) {
+      toast.error("请先选择要下载的工作量")
+      return
+    }
+
+    try {
+      setIsDownloading(true)
+      const response = await api.post("/workload/export/", 
+        { workload_ids: selectedWorkloads },
+        { responseType: 'blob' }
+      )
+
+      // 创建下载链接
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `工作量记录_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      toast.success("下载成功")
+      setSelectedWorkloads([]) // 清空选择
+    } catch (error) {
+      console.error("下载失败:", error)
+      toast.error("下载失败，请稍后重试")
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6">
       <div className="space-y-8">
@@ -193,6 +248,15 @@ export default function WorkloadAllPage() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleDownload}
+                disabled={selectedWorkloads.length === 0 || isDownloading}
+                className="h-10"
+              >
+                {isDownloading ? "下载中..." : `下载所选 (${selectedWorkloads.length})`}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -268,6 +332,13 @@ export default function WorkloadAllPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
+                  <TableHead className="w-[50px]">
+                    <Checkbox
+                      checked={currentWorkloads.length > 0 && selectedWorkloads.length === currentWorkloads.length}
+                      onCheckedChange={(checked: boolean) => handleSelectAll(checked)}
+                      aria-label="全选"
+                    />
+                  </TableHead>
                   <TableHead className="font-semibold">工作量名称</TableHead>
                   <TableHead className="font-semibold">提交人</TableHead>
                   <TableHead className="font-semibold">工作量来源</TableHead>
@@ -300,6 +371,13 @@ export default function WorkloadAllPage() {
                 ) : (
                   currentWorkloads.map((workload) => (
                     <TableRow key={workload.id} className="hover:bg-gray-50">
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedWorkloads.includes(workload.id)}
+                          onCheckedChange={(checked: boolean) => handleSelectWorkload(workload.id, checked)}
+                          aria-label={`选择工作量 ${workload.name}`}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{workload.name}</TableCell>
                       <TableCell>{workload.submitter.username}</TableCell>
                       <TableCell>{sourceMap[workload.source]}</TableCell>
