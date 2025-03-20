@@ -10,6 +10,12 @@ import { Button } from "@/components/ui/button"
 const navigation = [
   { name: "用户中心", href: "/profile" },
   {
+    name: "通知和公告",
+    items: [
+      { name: "公告", href: "/announcement" },
+    ]
+  },
+  {
     name: "总览",
     items: [
       { name: "所有工作量", href: "/workload/all" },
