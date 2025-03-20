@@ -34,27 +34,7 @@ import dayjs from "dayjs"
 import zhCN from "antd/locale/zh_CN"
 import "dayjs/locale/zh-cn"
 import "antd/dist/reset.css"
-
-// 工作量来源选项
-const sourceOptions = [
-  { value: "horizontal", label: "横向" },
-  { value: "innovation", label: "大创" },
-  { value: "hardware", label: "硬件小组" },
-  { value: "assessment", label: "考核小组" },
-]
-
-// 工作类型选项
-const typeOptions = [
-  { value: "remote", label: "远程" },
-  { value: "onsite", label: "实地" },
-]
-
-// 工作强度类型选项
-const intensityTypeOptions = [
-  { value: "total", label: "总计" },
-  { value: "daily", label: "每天" },
-  { value: "weekly", label: "每周" },
-]
+import { sourceOptions, typeOptions, intensityTypeOptions } from "@/lib/types/workload"
 
 // 表单验证模式
 const formSchema = z

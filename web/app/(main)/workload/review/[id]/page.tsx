@@ -24,7 +24,6 @@ import {
   sourceMap,
   typeMap,
   intensityTypeMap,
-  statusMap,
   reviewOptions
 } from "@/lib/types/workload"
 

@@ -33,38 +33,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useAuthStore } from "@/lib/store/auth"
 import { Card } from "@/components/ui/card"
-
-// 工作量来源映射
-const sourceMap = {
-  horizontal: "横向",
-  innovation: "大创",
-  hardware: "硬件小组",
-  assessment: "考核小组",
-}
-
-// 工作类型映射
-const typeMap = {
-  remote: "远程",
-  onsite: "实地",
-}
-
-// 工作强度类型映射
-const intensityTypeMap = {
-  total: "总计",
-  daily: "每天",
-  weekly: "每周",
-}
-
-// 状态映射
-const statusMap = {
-  pending: "待审核",
-  mentor_approved: "导师已审核",
-  teacher_approved: "教师已审核",
-  mentor_rejected: "导师已驳回",
-  teacher_rejected: "教师已驳回",
-}
+import {sourceMap, typeMap, intensityTypeMap, statusMap } from "@/lib/types/workload"
 
 // 工作量类型定义
 type Workload = {
@@ -91,10 +61,8 @@ type Workload = {
 
 export default function WorkloadSubmittedPage() {
   const router = useRouter()
-  const { user } = useAuthStore()
   const [workloads, setWorkloads] = useState<Workload[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [deletingId, setDeletingId] = useState<number | null>(null)
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
   const [selectedSource, setSelectedSource] = useState<string>("all")
   const [isStudent, setIsStudent] = useState(false)

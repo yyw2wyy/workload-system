@@ -23,29 +23,8 @@ import {
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { useAuthStore } from "@/lib/store/auth"
+import { sourceMap, typeMap, statusMap } from "@/lib/types/workload"
 
-// 工作量来源映射
-const sourceMap = {
-  horizontal: "横向",
-  innovation: "大创",
-  hardware: "硬件小组",
-  assessment: "考核小组",
-}
-
-// 工作类型映射
-const typeMap = {
-  remote: "远程",
-  onsite: "实地",
-}
-
-// 状态映射
-const statusMap = {
-  pending: "待审核",
-  mentor_approved: "导师已审核",
-  teacher_approved: "教师已审核",
-  mentor_rejected: "导师已驳回",
-  teacher_rejected: "教师已驳回",
-}
 
 type Workload = {
   id: number

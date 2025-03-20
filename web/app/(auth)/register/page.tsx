@@ -10,17 +10,6 @@ import { toast } from "sonner"
 import { registerSchema } from "@/lib/validations/auth"
 import { useAuthStore } from "@/lib/store/auth"
 import type { RegisterCredentials } from "@/lib/types/auth"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
 export default function RegisterPage() {
   const [error, setError] = useState<string>("")

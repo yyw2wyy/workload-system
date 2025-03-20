@@ -5,19 +5,11 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import * as z from "zod"
 import { toast } from "sonner"
 
 import { loginSchema } from "@/lib/validations/auth"
 import { useAuthStore } from "@/lib/store/auth"
-import type { LoginCredentials, UserRole } from "@/lib/types/auth"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import type { LoginCredentials } from "@/lib/types/auth"
 import {
   Form,
   FormControl,
