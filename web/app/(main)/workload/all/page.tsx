@@ -68,10 +68,16 @@ export default function WorkloadAllPage() {
   const [selectedSubmitter, setSelectedSubmitter] = useState<string | undefined>(undefined)
   const [selectedSource, setSelectedSource] = useState<string | undefined>(undefined)
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
+  const [selectedYear, setSelectedYear] = useState<string | undefined>(undefined)
+  const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined)
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedWorkloads, setSelectedWorkloads] = useState<number[]>([])
   const [isDownloading, setIsDownloading] = useState(false)
   const itemsPerPage = 10
+
+  // 计算可用年份和月份选项
+  const [yearOptions, setYearOptions] = useState<number[]>([])
+  const [monthOptions, setMonthOptions] = useState<number[]>([])
 
   // 获取所有工作量列表
   useEffect(() => {
@@ -153,6 +159,36 @@ export default function WorkloadAllPage() {
     fetchWorkloads()
   }
 
+  // 更新年月数据
+  useEffect(() => {
+    if (workloads.length > 0) {
+      // 提取所有不重复的年份
+      const years = Array.from(
+        new Set(
+          workloads.map(w => new Date(w.created_at).getFullYear())
+        )
+      ).sort((a, b) => b - a); // 降序排列
+      
+      setYearOptions(years);
+      
+      // 当选择了年份时，计算该年份下的月份选项
+      if (selectedYear) {
+        const year = parseInt(selectedYear);
+        const monthsInYear = Array.from(
+          new Set(
+            workloads
+              .filter(w => new Date(w.created_at).getFullYear() === year)
+              .map(w => new Date(w.created_at).getMonth() + 1) // JavaScript 月份从 0 开始
+          )
+        ).sort((a, b) => a - b); // 升序排列
+        
+        setMonthOptions(monthsInYear);
+      } else {
+        setMonthOptions([]);
+      }
+    }
+  }, [workloads, selectedYear]);
+
   // 筛选工作量
   useEffect(() => {
     let filtered = [...workloads]
@@ -169,9 +205,21 @@ export default function WorkloadAllPage() {
       filtered = filtered.filter(w => w.status === selectedStatus)
     }
     
+    // 按年份筛选
+    if (selectedYear && selectedYear !== "all") {
+      const year = parseInt(selectedYear);
+      filtered = filtered.filter(w => new Date(w.created_at).getFullYear() === year);
+    }
+    
+    // 按月份筛选
+    if (selectedMonth && selectedMonth !== "all" && selectedYear && selectedYear !== "all") {
+      const month = parseInt(selectedMonth);
+      filtered = filtered.filter(w => new Date(w.created_at).getMonth() + 1 === month);
+    }
+    
     setFilteredWorkloads(filtered)
     setCurrentPage(1) // 重置页码到第一页
-  }, [workloads, selectedSubmitter, selectedSource, selectedStatus])
+  }, [workloads, selectedSubmitter, selectedSource, selectedStatus, selectedYear, selectedMonth])
 
   // 计算分页数据
   const totalPages = Math.ceil(filteredWorkloads.length / itemsPerPage)
@@ -266,6 +314,48 @@ export default function WorkloadAllPage() {
               >
                 {isLoading ? "刷新中..." : "刷新"}
               </Button>
+              <Select
+                value={selectedYear}
+                onValueChange={(value) => {
+                  setSelectedYear(value);
+                  setSelectedMonth(undefined); // 重置月份选择
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-[120px] h-10">
+                  <SelectValue placeholder="选择年份" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部年份</SelectItem>
+                  {yearOptions.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}年
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select
+                value={selectedMonth}
+                onValueChange={(value) => {
+                  setSelectedMonth(value);
+                  setCurrentPage(1);
+                }}
+                disabled={!selectedYear || selectedYear === "all"}
+              >
+                <SelectTrigger className="w-full sm:w-[120px] h-10">
+                  <SelectValue placeholder="选择月份" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部月份</SelectItem>
+                  {monthOptions.map((month) => (
+                    <SelectItem key={month} value={month.toString()}>
+                      {month}月
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
               <Select
                 value={selectedSubmitter}
                 onValueChange={(value) => {

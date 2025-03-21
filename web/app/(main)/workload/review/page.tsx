@@ -64,6 +64,7 @@ export default function WorkloadReviewPage() {
   const [submitters, setSubmitters] = useState<{ id: number; username: string }[]>([])
   const [selectedSubmitter, setSelectedSubmitter] = useState<string | undefined>(undefined)
   const [selectedSource, setSelectedSource] = useState<string | undefined>(undefined)
+  const [selectedRole, setSelectedRole] = useState<string | undefined>(undefined)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -203,8 +204,12 @@ export default function WorkloadReviewPage() {
       filtered = filtered.filter(w => w.source === selectedSource)
     }
     
+    if (user?.role === "teacher" && selectedRole && selectedRole !== "all") {
+      filtered = filtered.filter(w => w.submitter.role === selectedRole)
+    }
+    
     setFilteredWorkloads(filtered)
-  }, [workloads, selectedSubmitter, selectedSource])
+  }, [workloads, selectedSubmitter, selectedSource, selectedRole, user])
 
   // 计算分页数据
   const totalPages = Math.ceil(filteredWorkloads.length / itemsPerPage)
@@ -238,6 +243,24 @@ export default function WorkloadReviewPage() {
               >
                 {isLoading ? "刷新中..." : "刷新"}
               </Button>
+              {user?.role === "teacher" && (
+                <Select
+                  value={selectedRole}
+                  onValueChange={(value) => {
+                    setSelectedRole(value)
+                    setCurrentPage(1)
+                  }}
+                >
+                  <SelectTrigger className="w-full sm:w-[180px] h-10">
+                    <SelectValue placeholder="选择提交人身份" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">全部身份</SelectItem>
+                    <SelectItem value="student">学生</SelectItem>
+                    <SelectItem value="mentor">导师</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               <Select
                 value={selectedSubmitter}
                 onValueChange={(value) => {
