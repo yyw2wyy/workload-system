@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: workload_db
+      MYSQL_USER: workload
+      MYSQL_PASSWORD: 123456admin
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - ./docker/mysql_data:/var/lib/mysql
+    ports:
+      - "13306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.0
+    restart: always
+    command: redis-server --requirepass 123456admin
+    ports:
+      - "16379:6379"
+    volumes:
+      - ./docker/redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "123456admin", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: 
+      context: ./api
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./api:/app
+      - ./docker/api_media:/app/media
+      - ./docker/api_static:/app/static
+    ports:
+      - "8000:8000"
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file:
+      - ./api/.env.docker
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+    # environment:
+    #   - NODE_ENV=production
+    # env_file:
+    #   - ./web/.env.docker 
