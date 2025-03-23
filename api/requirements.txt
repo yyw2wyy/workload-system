@@ -21,6 +21,9 @@ redis==5.0.1           # Redis 客户端
 Pillow==10.2.0
 python-magic==0.4.27      # 文件类型检测
 
+# Excel处理
+openpyxl==3.1.2         # Excel文件处理
+
 # API 文档
 drf-yasg==1.21.7
 
@@ -41,3 +44,6 @@ requests==2.31.0
 
 # 性能监控
 django-prometheus==2.3.1  # Prometheus 监控集成 
+
+# WSGI server
+gunicorn==21.2.0 
