@@ -212,6 +212,9 @@ REST_FRAMEWORK = {
 # CORS设置
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Next.js前端地址
+    "http://127.0.0.1:3000",  # 同样的前端地址，不同写法
+    "http://web:3000",        # Docker容器名称
+    "http://0.0.0.0:3000",    # 用于Docker环境
 ]
 CORS_ALLOW_CREDENTIALS = True  # 允许跨域请求携带凭证
 
@@ -221,7 +224,12 @@ CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
 CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_SECURE = False  # 开发环境设置为False，生产环境应该设置为True
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']  # 添加前端域名
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://web:3000',
+    'http://0.0.0.0:3000',
+]  # 添加前端域名
 
 # 性能优化设置
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
