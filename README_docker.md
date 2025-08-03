@@ -47,11 +47,11 @@ Docker 相关的文件结构：
 │   ├── redis_data/              # Redis 数据存储
 │   ├── api_media/               # 后端媒体文件存储
 │   └── api_static/              # 后端静态文件存储
-├── api/                         # 后端代码
+├── api/                         # Django 后端 (Python 3.10)
 │   ├── Dockerfile               # 后端 Docker 构建文件
 │   ├── .env.docker              # 后端 Docker 环境变量
 │   └── ...
-└── web/                         # 前端代码
+└── web/                         # Next.js 前端 (Node.js 20.17)
     ├── Dockerfile               # 前端 Docker 构建文件
     └── ...
 ```
@@ -61,46 +61,69 @@ Docker 相关的文件结构：
 ### 1. 获取代码
 
 ```bash
-git clone <项目仓库地址> workload-system
+git clone <项目仓库URL>
 cd workload-system
 ```
 
-### 2. 环境配置
+### 2.创建docker目录用于持久化数据
+
+```
+mkdir -p docker/mysql_data docker/redis_data docker/api_media docker/api_static
+```
+
+### 3. 环境配置
 
 首次部署前，请检查并根据需要修改以下配置文件：
 
 - `api/.env.docker`：后端环境配置
-- `docker-compose.yml`：Docker 服务配置
+
+- `docker-compose.yml`：Docker 服务配置。
+
+  尤其注意`db`容器中的`user`，如果在windows下运行，注释掉这一行，如果在liunx下运行，
+
+  ```
+  # liunx下需设置MySQL的运行用户，不设置的话默认以root用户运行，会导致因为权限不足无法删除mysql_data文件夹，
+      user: "1047:1047"
+  ```
+
+  **如何确定当前用户的 UID/GID？**
+   在终端运行：
+
+  ```
+  id -u  # 获取当前用户 UID
+  id -g  # 获取当前用户 GID
+  ```
+
+  然后把 `1047:1047` 替换成实际值。
 
 **重要**：在生产环境中，请修改所有默认密码和密钥！
 
-### 3. 启动服务
-
-执行以下命令启动所有服务：
+### 4. 构建并启动服务
 
 ```bash
 docker-compose up -d
+or 
+docker compose up -d
 ```
-
-首次启动时，Docker 将：
-1. 拉取所需的基础镜像（MySQL, Redis）
-2. 构建前端和后端应用镜像
-3. 创建并启动所有容器
-
-此过程可能需要几分钟时间，具体取决于您的网络速度和服务器性能。
 
 ### 4. 数据库初始化
 
 首次部署时，需要执行数据库迁移并创建初始管理员账户：
 
 ```bash
-docker-compose exec api python manage.py migrate
-docker-compose exec api python manage.py createsuperuser
+docker-compose exec api bash
+python manage.py migrate
+python manage.py createsuperuser
+用户名：admin
+邮箱：admin@example.com
+Password：
+
+exit
 ```
 
 按照提示输入管理员用户名、邮箱和密码。
 
-### 5. 收集静态文件
+### 5. 收集静态文件（好像不需要）
 
 ```bash
 docker-compose exec api python manage.py collectstatic --noinput
@@ -179,6 +202,8 @@ docker-compose restart <服务名>  # 例如: docker-compose restart api
    ```bash
    docker-compose exec api python manage.py migrate
    ```
+
+
 
 ### 查看日志
 
