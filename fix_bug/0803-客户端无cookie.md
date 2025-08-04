@@ -36,7 +36,40 @@
 
 ### GPT建议
 
-使用 JWT 替代 Session + CSRF（面向未来）
+#### 方法一：**确保所有请求为“同源请求”**
+
+Django 后端在 localhost:8000，前端在 localhost:3000，**严格来说是“跨源”**（不同端口号被视为不同 origin）。
+
+🔧 **你可以这样做**（推荐）：
+
+1. **让 React 请求使用相对路径，而不是 baseURL 设置为 `http://localhost:8000/api`**：
+
+```
+ts
+
+
+复制编辑
+const baseURL = '/api'; // 而不是 'http://localhost:8000/api'
+```
+
+1. 所有同学建立双隧道：
+
+```
+bash
+
+
+复制编辑
+ssh -L 3000:localhost:3000 -L 8000:localhost:8000 user@server_ip
+```
+
+这样：
+
+- React 前端在 `http://localhost:3000`
+- 请求 `/api/...` → 自动发到 `localhost:8000`（本地通过隧道）
+
+这种情况下，前后端都在 `localhost`，**不会触发跨域机制**，cookie 能顺利传递，Django 能收到 `sessionid` 和 `csrftoken`。
+
+#### 方法二：使用 JWT 替代 Session + CSRF（面向未来）
 
 如果系统后续计划长期使用、部署在公网，建议切换成 **JWT 认证** 模式：
 
@@ -51,3 +84,6 @@
 
 ![wechat_2025-08-03_161035_398](img/wechat_2025-08-03_161035_398.png)
 
+### 其他
+
+和gpt的对话太长了，得总结后重开一个窗口

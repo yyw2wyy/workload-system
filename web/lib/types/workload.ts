@@ -6,6 +6,8 @@ export const sourceMap = {
   innovation: "大创",
   hardware: "硬件小组",
   assessment: "考核小组",
+  documentation: "材料撰写",
+  other: "其他",
 } as const
 
 // 工作类型映射
@@ -42,6 +44,8 @@ export const sourceOptions = [
   { value: "innovation", label: "大创" },
   { value: "hardware", label: "硬件小组" },
   { value: "assessment", label: "考核小组" },
+  { value: "documentation", label: "材料撰写" },
+  { value: "other", label: "其他" },
 ] as const
 
 export const typeOptions = [
@@ -104,7 +108,7 @@ export type Workload = {
 export const workloadFormSchema = z.object({
   name: z.string().min(1, "请输入工作量名称"),
   content: z.string().min(1, "请输入工作量内容"),
-  source: z.enum(["horizontal", "innovation", "hardware", "assessment"], {
+  source: z.enum(["horizontal", "innovation", "hardware", "assessment", "documentation", "other"], {
     required_error: "请选择工作量来源",
   }),
   type: z.enum(["remote", "onsite"], {

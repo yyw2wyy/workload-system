@@ -20,6 +20,8 @@ class Workload(models.Model):
         ('innovation', '大创'),
         ('hardware', '硬件小组'),
         ('assessment', '考核小组'),
+        ('documentation', '材料撰写'),
+        ('other', '其他'),
     )
     
     # 工作类型选项
