@@ -212,10 +212,11 @@ export default function WorkloadSubmittedPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">全部来源</SelectItem>
-                  <SelectItem value="horizontal">横向</SelectItem>
-                  <SelectItem value="innovation">大创</SelectItem>
-                  <SelectItem value="hardware">硬件小组</SelectItem>
-                  <SelectItem value="assessment">考核小组</SelectItem>
+                  {Object.entries(sourceMap).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>
+                      {value}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

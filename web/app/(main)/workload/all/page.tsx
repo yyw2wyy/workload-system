@@ -291,9 +291,6 @@ export default function WorkloadAllPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div className="space-y-1">
               <h3 className="text-2xl font-semibold tracking-tight">所有工作量</h3>
-              <p className="text-sm text-muted-foreground">
-                查看系统中的所有工作量记录
-              </p>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
               <Button

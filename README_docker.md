@@ -196,8 +196,11 @@ docker-compose restart <服务名>  # 例如: docker-compose restart api
 2. 重新构建并启动容器：
    ```bash
    docker-compose up -d --build
+   或重新完整构建
+   docker compose build --no-cache
+   docker compose up -d
    ```
-
+   
 3. 如有数据库变更，执行迁移：
    ```bash
    docker-compose exec api python manage.py migrate
