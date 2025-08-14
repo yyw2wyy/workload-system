@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 ENV PYTHONUNBUFFERED 1
 
 # 暴露Django服务端口
-EXPOSE 8000
+EXPOSE 8888
 
 # 设置启动命令
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8888"]

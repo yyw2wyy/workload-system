@@ -9,7 +9,7 @@ RUN npm ci \
     && npm run build
 
 # 暴露端口
-EXPOSE 3000
+EXPOSE 3333
 
 # 启动命令
-CMD ["npm", "start"]
+CMD ["npx", "next", "start", "-p", "3333"]

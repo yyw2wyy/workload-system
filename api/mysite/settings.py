@@ -209,12 +209,12 @@ REST_FRAMEWORK = {
     }
 }
 
-# CORS设置
+
+FRONTEND_PORT = os.getenv("FRONTEND_PORT", "3333")
+FRONTEND_HOSTS = os.getenv("FRONTEND_HOSTS", "localhost,127.0.0.1,web,0.0.0.0").split(",")
+
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Next.js前端地址
-    "http://127.0.0.1:3000",  # 同样的前端地址，不同写法
-    "http://web:3000",        # Docker容器名称
-    "http://0.0.0.0:3000",    # 用于Docker环境
+    f"http://{host.strip()}:{FRONTEND_PORT}" for host in FRONTEND_HOSTS
 ]
 CORS_ALLOW_CREDENTIALS = True  # 允许跨域请求携带凭证
 
@@ -225,11 +225,8 @@ CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_SECURE = False  # 开发环境设置为False，生产环境应该设置为True
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://web:3000',
-    'http://0.0.0.0:3000',
-]  # 添加前端域名
+    f"http://{host.strip()}:{FRONTEND_PORT}" for host in FRONTEND_HOSTS
+]
 
 # 性能优化设置
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB

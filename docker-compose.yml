@@ -52,8 +52,7 @@ services:
       - ./docker/api_media:/app/media
       - ./docker/api_static:/app/static
     ports:
-      - "8000:8000"
-    command: python manage.py runserver 0.0.0.0:8000
+      - "8888:8888"
     env_file:
       - ./api/.env.docker
 
@@ -66,7 +65,7 @@ services:
       api:
         condition: service_started
     ports:
-      - "3000:3000"
+      - "3333:3333"
     environment:
       - NODE_ENV=production
     env_file:

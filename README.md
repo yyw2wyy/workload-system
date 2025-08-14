@@ -29,6 +29,12 @@
 - **缓存**：Redis 用于会话管理和缓存
 - **认证**：基于 JWT (JSON Web Token) 的用户认证
 
+## 基本依赖
+
+后端：python 3.10.16
+
+前端：node v20.17.0
+
 ## 后端 (API)
 
 ### 后端技术栈
@@ -106,8 +112,10 @@ api/
 **启动开发服务器**
 
 ```bash
-python manage.py runserver
+python manage.py runserver 0.0.0.0:8888
 ```
+
+>  默认为8000端口
 
 **创建超级用户**
 
@@ -193,16 +201,18 @@ web/
 **开发环境运行**
 
 ```bash
-npm run dev
+npx next dev -p 3333
 ```
 
-这将启动开发服务器，默认地址为 http://localhost:3000
+这将启动开发服务器，地址为 http://localhost:3333
+
+> 默认为3000端口
 
 **生产构建**
 
 ```bash
-npm run build
-npm start
+npx next build
+npx next start -p 3333
 ```
 
 ## 环境配置
@@ -216,23 +226,32 @@ npm start
 - Django SECRET_KEY
 - 调试模式开关
 - 允许的主机列表
+- 前端运行端口
 
 示例：
 ```
+# 数据库配置
 DB_NAME=workload_db
-DB_USER=username
-DB_PASSWORD=password
+DB_USER=workload
+DB_PASSWORD=123456admin
 DB_HOST=localhost
 DB_PORT=3306
 
-REDIS_HOST=localhost
+# Redis 配置
+REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 REDIS_DB=1
-REDIS_PASSWORD=password
+REDIS_PASSWORD=123456admin  #如果 Redis 没有设置密码，保持为空
+REDIS_URL=redis://127.0.0.1:6379/1
 
-DJANGO_SECRET_KEY=your-secret-key
+# Django 配置
+DJANGO_SECRET_KEY=django-insecure-hp6d_%0)xkjc*2n(xp%05y3@6re$0!*bvpbcu%b376!92frt5&
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+
+# 前端端口配置
+FRONTEND_HOSTS=localhost,127.0.0.1,web,0.0.0.0
+FRONTEND_PORT=3333
 ```
 
 ### 前端环境变量 (.env.local)
@@ -290,3 +309,109 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ---
 
 如需更多帮助或发现问题，请提交Issue或联系系统管理员。
+
+## 端口
+
+首先本项目不通过环境变量来设置前后端运行端口，而是通过启动命令来确定前后端运行端口，环境变量只是为了前后端的正常通信。
+下面以前端在8888端口，后端在3333端口运行为例。
+
+### 源码启动
+
+#### 后端
+
+```
+cd api
+python manage.py runserver 0.0.0.0:8888
+```
+
+后端即在8888端口启动
+
+#### 前端
+
+```
+开发环境
+npx next dev -p 3333
+
+生产环境
+npx next build
+npx next start -p 3333
+```
+
+前端即在3333端口启动
+
+#### .env配置
+
+修改后端`.env`文件中的`FRONTEND_PORT`值为前端运行端口
+
+```
+# 前端端口配置
+FRONTEND_HOSTS=localhost,127.0.0.1,web,0.0.0.0
+FRONTEND_PORT=3333
+```
+
+修改前端`.env.local`文件中的`NEXT_PUBLIC_API_URL`中的端口为后端运行端口
+
+```
+# API地址配置
+NEXT_PUBLIC_API_URL=http://localhost:8888/api
+```
+
+### Docker启动
+
+#### 后端
+
+修改后端Dockerfile中的`EXPOSE`以及`CMD`中的端口，后端即在8888端口运行
+
+```
+# 暴露Django服务端口
+EXPOSE 8888
+
+# 设置启动命令
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8888"]
+```
+
+#### 前端
+
+修改前端Dockerfile中的`EXPOSE`以及`CMD`中的端口，前端即在3333端口运行
+
+```
+# 暴露端口
+EXPOSE 3333
+
+# 启动命令
+CMD ["npx", "next", "start", "-p", "3333"]
+```
+
+#### docker-compose.yml
+
+修改后端api镜像中的`ports`变量为实际运行端口
+
+```
+ports:
+  - "8888:8888"
+```
+
+修改前端web镜像中的`ports`变量为实际运行端口
+
+```
+ports:
+  - "3333:3333"
+```
+
+#### .env.docker配置
+
+修改后端`.env.docker`文件中的`FRONTEND_PORT`值为前端运行端口
+
+```
+# 前端端口配置
+FRONTEND_HOSTS=localhost,127.0.0.1,web,0.0.0.0
+FRONTEND_PORT=3333
+```
+
+修改前端`.env.docker`文件中的`NEXT_PUBLIC_API_URL`中的端口为后端运行端口
+
+```
+# API地址配置
+NEXT_PUBLIC_API_URL=http://localhost:8888/api
+```
+
