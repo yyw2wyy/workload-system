@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "corsheaders",
     'django_prometheus',
     "announcement",  # 添加系统公告应用
+    "drf_yasg",  # 添加Swagger文档生成器
 ]
 
 MIDDLEWARE = [
