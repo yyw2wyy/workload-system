@@ -108,10 +108,10 @@ export type Workload = {
 export const workloadFormSchema = z.object({
   name: z.string().min(1, "请输入工作量名称"),
   content: z.string().min(1, "请输入工作量内容"),
-  source: z.enum(["horizontal", "innovation", "hardware", "assessment", "documentation", "other"], {
+  source: z.enum(Object.keys(sourceMap) as [WorkloadSource, ...WorkloadSource[]], {
     required_error: "请选择工作量来源",
   }),
-  type: z.enum(["remote", "onsite"], {
+  type: z.enum(Object.keys(typeMap) as [WorkloadType, ...WorkloadType[]], {
     required_error: "请选择工作类型",
   }),
   startDate: z.date({
@@ -120,7 +120,7 @@ export const workloadFormSchema = z.object({
   endDate: z.date({
     required_error: "请选择结束日期",
   }),
-  intensityType: z.enum(["total", "daily", "weekly"], {
+  intensityType: z.enum(Object.keys(intensityTypeMap) as [IntensityType, ...IntensityType[]], {
     required_error: "请选择工作强度类型",
   }),
   intensityValue: z.string().min(1, "请输入工作强度值"),

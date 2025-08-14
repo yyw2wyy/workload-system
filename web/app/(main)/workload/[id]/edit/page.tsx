@@ -34,17 +34,25 @@ import dayjs from "dayjs"
 import zhCN from "antd/locale/zh_CN"
 import "dayjs/locale/zh-cn"
 import "antd/dist/reset.css"
-import { sourceOptions, typeOptions, intensityTypeOptions } from "@/lib/types/workload"
+import {
+    sourceOptions,
+    typeOptions,
+    intensityTypeOptions,
+    WorkloadSource,
+    WorkloadType,
+    IntensityType,
+    WorkloadStatus, sourceMap, typeMap, intensityTypeMap,
+} from "@/lib/types/workload"
 
 // 表单验证模式
 const formSchema = z
   .object({
     name: z.string().min(1, "请输入工作量名称"),
     content: z.string().min(1, "请输入工作内容"),
-    source: z.enum(["horizontal", "innovation", "hardware", "assessment"], {
+    source: z.enum(Object.keys(sourceMap) as [WorkloadSource, ...WorkloadSource[]], {
       required_error: "请选择工作量来源",
     }),
-    work_type: z.enum(["remote", "onsite"], {
+    work_type: z.enum(Object.keys(typeMap) as [WorkloadType, ...WorkloadType[]], {
       required_error: "请选择工作类型",
     }),
     start_date: z.date({
@@ -53,7 +61,7 @@ const formSchema = z
     end_date: z.date({
       required_error: "请选择结束日期",
     }),
-    intensity_type: z.enum(["total", "daily", "weekly"], {
+    intensity_type: z.enum(Object.keys(intensityTypeMap) as [IntensityType, ...IntensityType[]], {
       required_error: "请选择工作强度类型",
     }),
     intensity_value: z.coerce
@@ -91,11 +99,11 @@ type Workload = {
   id: number
   name: string
   content: string
-  source: "horizontal" | "innovation" | "hardware" | "assessment"
-  work_type: "remote" | "onsite"
+  source: WorkloadSource
+  work_type: WorkloadType
   start_date: string
   end_date: string
-  intensity_type: "total" | "daily" | "weekly"
+  intensity_type: IntensityType
   intensity_value: number
   attachments: string | null
   attachments_url: string | null
@@ -110,7 +118,7 @@ type Workload = {
     username: string
     role: string
   } | null
-  status: string
+  status: WorkloadStatus
 }
 
 export default function WorkloadEditPage({
