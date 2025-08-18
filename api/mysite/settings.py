@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     "corsheaders",
     'django_prometheus',
     "announcement",  # 添加系统公告应用
-    "drf_yasg",  # 添加Swagger文档生成器
+    "drf_spectacular",  # 使用DRF Spectacular
 ]
 
 MIDDLEWARE = [
@@ -207,7 +207,8 @@ REST_FRAMEWORK = {
         'anon': '30/minute',    # 匿名用户限流
         'user': '60/minute',    # 认证用户限流
         'burst': '100/minute',  # 突发请求限流
-    }
+    },
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 

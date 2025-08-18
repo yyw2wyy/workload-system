@@ -18,25 +18,16 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from rest_framework import permissions
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
+from rest_framework.permissions import IsAdminUser
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
-schema_view = get_schema_view(
-    openapi.Info(
-        title="工作量系统 API",
-        default_version='v1',
-        description="实验室内部工作量管理系统 API 文档",
-    ),
-    public=False,
-    permission_classes=(permissions.IsAdminUser,),
-)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/user/", include("user.urls")),  # 包含user应用的URL配置
     path("api/workload/", include("workload.urls")),  # 包含workload应用的URL配置
     path("api/announcement/", include("announcement.urls")),  # 添加公告应用的 URL
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('doc/schema/', SpectacularAPIView.as_view(permission_classes=[IsAdminUser]), name='schema'),# schema的配置文件的路由，下面两个ui也是根据这个配置文件来生成的
+    path('doc/swagger/', SpectacularSwaggerView.as_view(url_name='schema',permission_classes=[IsAdminUser]), name='swagger-ui'),# swagger-ui的路由
+    path('doc/redoc/', SpectacularRedocView.as_view(url_name='schema',permission_classes=[IsAdminUser]), name='redoc'),  # redoc的路由
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
