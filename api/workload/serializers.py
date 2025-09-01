@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 import os
 import logging
+from datetime import timedelta,date
 
 User = get_user_model()
 
@@ -72,6 +73,16 @@ class WorkloadSerializer(serializers.ModelSerializer):
             if attachments.size > 10 * 1024 * 1024:  # 10MB
                 raise serializers.ValidationError({
                     "attachments": "文件大小不能超过10MB"
+                })
+
+        # 材料撰写必须在完成后1个月内申报
+        source = data.get('source', getattr(self.instance, 'source', None))
+        end_date = data.get('end_date', getattr(self.instance, 'end_date', None))
+        if source == 'documentation' and end_date:
+            today = date.today()
+            if today - end_date > timedelta(days=30):
+                raise serializers.ValidationError({
+                    "end_date": "材料撰写类工作量必须在完成后1个月内申报"
                 })
 
         return data

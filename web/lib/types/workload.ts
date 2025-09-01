@@ -132,6 +132,15 @@ export const workloadFormSchema = z.object({
 }, {
   message: "结束日期不能早于开始日期",
   path: ["endDate"],
+}).refine((data) => {
+  if (!data.endDate || data.source !== "documentation") return true
+  const today = new Date()
+  const diffTime = today.getTime() - data.endDate.getTime()
+  const diffDays = diffTime / (1000 * 60 * 60 * 24)
+  return diffDays <= 30
+}, {
+  message: "材料撰写必须在完成后1个月内申报",
+  path: ["endDate"],
 })
 
 // 表单类型定义

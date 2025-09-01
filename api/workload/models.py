@@ -2,6 +2,7 @@ from django.db import models, transaction
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 import os
+from datetime import date, timedelta
 
 User = get_user_model()
 
@@ -121,6 +122,11 @@ class Workload(models.Model):
         # 验证结束日期不早于开始日期
         if self.end_date and self.start_date and self.end_date < self.start_date:
             raise ValidationError('结束日期不能早于开始日期')
+
+        # 验证材料撰写的申报时间不得超过1个月
+        if self.source == 'documentation' and self.end_date:
+            if date.today() - self.end_date > timedelta(days=30):
+                raise ValidationError('材料撰写类工作量必须在完成后1个月内申报')
         
         # 验证审核者角色
         if self.submitter.role == 'student':
