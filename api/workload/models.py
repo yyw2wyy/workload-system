@@ -22,6 +22,7 @@ class Workload(models.Model):
         ('hardware', '硬件小组'),
         ('assessment', '考核小组'),
         ('documentation', '材料撰写'),
+        ('assistant', '助教'),
         ('other', '其他'),
     )
     
@@ -46,6 +47,12 @@ class Workload(models.Model):
         ('teacher_approved', '教师已审核'),
         ('teacher_rejected', '教师已驳回'),
     )
+
+    # 大创阶段选项
+    INNOVATION_STAGE_CHOICES = (
+        ('before', '立项前'),
+        ('after', '立项后'),
+    )
     
     # 基本信息
     name = models.CharField('工作量名称', max_length=200)
@@ -58,7 +65,23 @@ class Workload(models.Model):
     # 工作强度
     intensity_type = models.CharField('工作强度类型', max_length=20, choices=INTENSITY_TYPE_CHOICES)
     intensity_value = models.FloatField('工作强度值', validators=[MinValueValidator(0.0)])
-    
+
+    # 特殊字段
+    innovation_stage = models.CharField(
+        '大创阶段',
+        max_length=20,
+        choices=INNOVATION_STAGE_CHOICES,
+        blank=True,
+        null=True,
+        help_text='仅当工作来源为大创时需要填写'
+    )
+    assistant_salary_paid = models.IntegerField(
+        '已发助教工资',
+        blank=True,
+        null=True,
+        help_text='仅当工作来源为助教时需要填写'
+    )
+
     # 证明材料
     attachments = models.FileField(
         '附件',
@@ -127,6 +150,14 @@ class Workload(models.Model):
         if self.source == 'documentation' and self.end_date:
             if date.today() - self.end_date > timedelta(days=30):
                 raise ValidationError('材料撰写类工作量必须在完成后1个月内申报')
+
+        # 验证大创必须填写阶段
+        if self.source == 'innovation' and not self.innovation_stage:
+            raise ValidationError('大创类工作量必须选择阶段（立项前/立项后）')
+
+        # 验证助教必须填写工资
+        if self.source == 'assistant' and self.assistant_salary_paid is None:
+            raise ValidationError('助教类工作量必须填写已发助教工资')
         
         # 验证审核者角色
         if self.submitter.role == 'student':

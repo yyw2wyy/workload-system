@@ -39,7 +39,8 @@ import {
   defaultFormValues,
   sourceOptions,
   typeOptions,
-  intensityTypeOptions
+  intensityTypeOptions,
+  innovationStageOptions,
 } from "@/lib/types/workload"
 
 type Reviewer = {
@@ -56,6 +57,7 @@ export default function WorkloadSubmitPage() {
     defaultValues: defaultFormValues,
   })
 
+  const sourceValue = form.watch("source") // 监听来源
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [reviewers, setReviewers] = useState<Reviewer[]>([])
   const [fileList, setFileList] = useState<File[]>([])
@@ -149,6 +151,13 @@ export default function WorkloadSubmitPage() {
       formData.append("end_date", format(data.endDate, "yyyy-MM-dd"));
       formData.append("intensity_type", data.intensityType);
       formData.append("intensity_value", data.intensityValue);
+
+      if (data.source === "innovation" && data.innovationStage) {
+        formData.append("innovation_stage", data.innovationStage)
+      }
+      if (data.source === "assistant" && data.assistantSalaryPaid) {
+        formData.append("assistant_salary_paid", data.assistantSalaryPaid)
+      }
       
       // 只有学生才需要提供审核导师
       if (isStudent && data.mentor_reviewer) {
@@ -336,6 +345,54 @@ export default function WorkloadSubmitPage() {
                       </FormItem>
                     )}
                   />
+                  {/* 动态显示：大创阶段 */}
+                {sourceValue === "innovation" && (
+                  <FormField
+                    control={form.control}
+                    name="innovationStage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">大创阶段</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-11">
+                              <SelectValue placeholder="请选择大创阶段" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {innovationStageOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                {/* 动态显示：已发助教工资 */}
+                {sourceValue === "assistant" && (
+                  <FormField
+                    control={form.control}
+                    name="assistantSalaryPaid"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">已发助教工资</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="请输入已发助教工资（整数）"
+                            className="h-11"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                )}
                   <FormField
                     control={form.control}
                     name="type"

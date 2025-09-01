@@ -32,6 +32,7 @@ class WorkloadSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'content', 'source', 'work_type',
             'start_date', 'end_date', 'intensity_type', 'intensity_value',
+            'innovation_stage', 'assistant_salary_paid',
             'attachments', 'attachments_url', 'original_filename', 'submitter', 
             'mentor_reviewer', 'mentor_reviewer_id', 'mentor_comment', 'mentor_review_time',
             'teacher_reviewer', 'teacher_comment', 'teacher_review_time',
@@ -84,6 +85,21 @@ class WorkloadSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "end_date": "材料撰写类工作量必须在完成后1个月内申报"
                 })
+
+        # 大创必须填写阶段
+        innovation_stage = data.get('innovation_stage') or getattr(self.instance, 'innovation_stage', None)
+        if source == 'innovation' and not innovation_stage:
+            raise serializers.ValidationError({
+                "innovation_stage": "大创类工作量必须选择阶段（立项前/立项后）"
+            })
+
+        # 助教必须填写工资
+        assistant_salary_paid = data.get('assistant_salary_paid') or getattr(self.instance, 'assistant_salary_paid',
+                                                                                None)
+        if source == 'assistant' and assistant_salary_paid is None:
+            raise serializers.ValidationError({
+                "assistant_salary_paid": "助教类工作量必须填写已发助教工资"
+            })
 
         return data
 

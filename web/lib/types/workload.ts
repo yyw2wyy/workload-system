@@ -7,7 +7,14 @@ export const sourceMap = {
   hardware: "硬件小组",
   assessment: "考核小组",
   documentation: "材料撰写",
+  assistant: "助教",
   other: "其他",
+} as const
+
+// 大创阶段映射
+export const innovationStageMap = {
+  before: "立项前",
+  after: "立项后",
 } as const
 
 // 工作类型映射
@@ -45,7 +52,13 @@ export const sourceOptions = [
   { value: "hardware", label: "硬件小组" },
   { value: "assessment", label: "考核小组" },
   { value: "documentation", label: "材料撰写" },
+  { value: "assistant", label: "助教" },
   { value: "other", label: "其他" },
+] as const
+
+export const innovationStageOptions = [
+  { value: "before", label: "立项前" },
+  { value: "after", label: "立项后" },
 ] as const
 
 export const typeOptions = [
@@ -61,6 +74,7 @@ export const intensityTypeOptions = [
 
 // 类型定义
 export type WorkloadSource = keyof typeof sourceMap
+export type InnovationStage = keyof typeof innovationStageMap
 export type WorkloadType = keyof typeof typeMap
 export type IntensityType = keyof typeof intensityTypeMap
 export type WorkloadStatus = keyof typeof statusMap
@@ -77,6 +91,8 @@ export type Workload = {
   end_date: string
   intensity_type: IntensityType
   intensity_value: number
+  innovation_stage: InnovationStage | null
+  assistant_salary_paid: number | null
   attachments: string | null
   attachments_url: string | null
   original_filename: string | null
@@ -124,6 +140,8 @@ export const workloadFormSchema = z.object({
     required_error: "请选择工作强度类型",
   }),
   intensityValue: z.string().min(1, "请输入工作强度值"),
+  innovationStage: z.string().optional(),
+  assistantSalaryPaid: z.string().optional(),
   attachments: z.any().optional(),
   mentor_reviewer: z.string().optional(),
 }).refine((data) => {
@@ -141,6 +159,19 @@ export const workloadFormSchema = z.object({
 }, {
   message: "材料撰写必须在完成后1个月内申报",
   path: ["endDate"],
+}).refine((data) => {
+  if (data.source !== "innovation") return true
+  return !!data.innovationStage
+}, {
+  message: "请选择大创阶段",
+  path: ["innovationStage"],
+})
+.refine((data) => {
+  if (data.source !== "assistant") return true
+  return !!data.assistantSalaryPaid && !isNaN(Number(data.assistantSalaryPaid))
+}, {
+  message: "请输入已发助教工资（整数）",
+  path: ["assistantSalaryPaid"],
 })
 
 // 表单类型定义
@@ -154,5 +185,7 @@ export const defaultFormValues: Partial<WorkloadFormValues> = {
   type: "" as WorkloadType,
   intensityType: "" as IntensityType,
   intensityValue: "",
+  innovationStage: "",
+  assistantSalaryPaid: "",
   mentor_reviewer: "",
 } 
