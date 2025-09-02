@@ -1,10 +1,10 @@
 import * as z from "zod"
-import { UserRole } from "../types/auth"
+import {roleMap, UserRole} from "../types/auth"
 
 export const loginSchema = z.object({
   username: z.string().min(1, "用户名不能为空"),
   password: z.string().min(6, "密码至少需要6个字符"),
-  role: z.enum(["student", "mentor", "teacher"], {
+  role: z.enum(Object.keys(roleMap) as [UserRole, ...UserRole[]], {
     required_error: "请选择用户角色",
   }),
 })

@@ -20,13 +20,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
+import {roleMap} from "@/lib/types/auth";
 
-// 角色映射表
-const roleMap: Record<string, string> = {
-  teacher: '教师',
-  admin: '管理员',
-  student: '学生',
-}
 
 export default function ProfilePage() {
   const { user, updateUser, changePassword } = useAuthStore()

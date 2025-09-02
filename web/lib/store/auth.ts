@@ -1,14 +1,8 @@
 import { create } from 'zustand'
 import { api } from '../api'
-import type { LoginCredentials, RegisterCredentials } from '../types/auth'
+import type {LoginCredentials, RegisterCredentials, User} from '../types/auth'
 import { toast } from 'sonner'
 
-interface User {
-  id: string
-  username: string
-  email: string
-  role: string
-}
 
 interface AuthState {
   user: User | null

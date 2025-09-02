@@ -9,7 +9,7 @@ import { toast } from "sonner"
 
 import { loginSchema } from "@/lib/validations/auth"
 import { useAuthStore } from "@/lib/store/auth"
-import type { LoginCredentials } from "@/lib/types/auth"
+import {LoginCredentials, roleOptions} from "@/lib/types/auth"
 import {
   Form,
   FormControl,
@@ -22,11 +22,6 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-const roleOptions = [
-  { value: "student", label: "学生" },
-  { value: "mentor", label: "导师" },
-  { value: "teacher", label: "老师" },
-]
 
 export default function LoginPage() {
   const [error, setError] = useState<string>("")
