@@ -38,88 +38,12 @@ import {
     sourceOptions,
     typeOptions,
     intensityTypeOptions,
-    WorkloadSource,
-    WorkloadType,
-    IntensityType,
-    WorkloadStatus, sourceMap, typeMap, intensityTypeMap,
+    innovationStageOptions,
+    Workload,
+    WorkloadFormValues,
+    workloadFormSchema,
+    defaultFormValues,
 } from "@/lib/types/workload"
-
-// 表单验证模式
-const formSchema = z
-  .object({
-    name: z.string().min(1, "请输入工作量名称"),
-    content: z.string().min(1, "请输入工作内容"),
-    source: z.enum(Object.keys(sourceMap) as [WorkloadSource, ...WorkloadSource[]], {
-      required_error: "请选择工作量来源",
-    }),
-    work_type: z.enum(Object.keys(typeMap) as [WorkloadType, ...WorkloadType[]], {
-      required_error: "请选择工作类型",
-    }),
-    start_date: z.date({
-      required_error: "请选择开始日期",
-    }),
-    end_date: z.date({
-      required_error: "请选择结束日期",
-    }),
-    intensity_type: z.enum(Object.keys(intensityTypeMap) as [IntensityType, ...IntensityType[]], {
-      required_error: "请选择工作强度类型",
-    }),
-    intensity_value: z.coerce
-      .number()
-      .min(0.1, "工作强度必须大于0")
-      .max(24, "工作强度不能超过24"),
-    mentor_reviewer_id: z.string().optional(),
-    attachments: z.instanceof(File).optional(),
-  })
-  .superRefine((data, ctx) => {
-    // 验证结束日期不早于开始日期
-    if (data.end_date < data.start_date) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "结束日期不能早于开始日期",
-        path: ["end_date"],
-      });
-    }
-
-    // 如果是学生，则必须选择导师
-    const userRole = localStorage.getItem('userRole');
-    if (userRole === 'student' && !data.mentor_reviewer_id) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "请选择审核导师",
-        path: ["mentor_reviewer_id"],
-      });
-    }
-  });
-
-type FormValues = z.infer<typeof formSchema>
-
-// 工作量类型定义
-type Workload = {
-  id: number
-  name: string
-  content: string
-  source: WorkloadSource
-  work_type: WorkloadType
-  start_date: string
-  end_date: string
-  intensity_type: IntensityType
-  intensity_value: number
-  attachments: string | null
-  attachments_url: string | null
-  original_filename: string | null
-  mentor_reviewer: {
-    id: number
-    username: string
-    role: string
-  } | null
-  teacher_reviewer: {
-    id: number
-    username: string
-    role: string
-  } | null
-  status: WorkloadStatus
-}
 
 export default function WorkloadEditPage({
   params,
@@ -165,17 +89,9 @@ export default function WorkloadEditPage({
   }, [isStudent])
 
   // 初始化表单
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      content: "",
-      source: "horizontal",
-      work_type: "remote",
-      intensity_type: "total",
-      intensity_value: 1,
-      mentor_reviewer_id: "",
-    },
+  const form = useForm<WorkloadFormValues>({
+    resolver: zodResolver(workloadFormSchema),
+    defaultValues: defaultFormValues,
   })
 
   // 获取工作量详情
@@ -187,7 +103,7 @@ export default function WorkloadEditPage({
           api.get("/user/list/"),
         ])
 
-        const workload = workloadRes.data
+        const workload: Workload = workloadRes.data
         // 过滤出导师角色的用户
         const mentors = reviewersRes.data.filter((user: any) => user.role === "mentor")
         setReviewers(mentors)
@@ -197,12 +113,14 @@ export default function WorkloadEditPage({
           name: workload.name,
           content: workload.content,
           source: workload.source,
-          work_type: workload.work_type,
-          start_date: new Date(workload.start_date),
-          end_date: new Date(workload.end_date),
-          intensity_type: workload.intensity_type,
-          intensity_value: workload.intensity_value,
-          mentor_reviewer_id: workload.mentor_reviewer?.id.toString() || "",
+          type: workload.work_type,
+          startDate: new Date(workload.start_date),
+          endDate: new Date(workload.end_date),
+          intensityType: workload.intensity_type,
+          intensityValue: workload.intensity_value.toString(),
+          innovationStage: workload.innovation_stage || "",
+          assistantSalaryPaid: workload.assistant_salary_paid?.toString() || "",
+          mentor_reviewer: workload.mentor_reviewer?.id.toString() || "",
         })
 
         // 设置工作量数据
@@ -228,7 +146,7 @@ export default function WorkloadEditPage({
   }, [resolvedParams.id, router, form])
 
   // 提交表单
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: WorkloadFormValues) => {
     try {
       const formData = new FormData()
       
@@ -236,15 +154,21 @@ export default function WorkloadEditPage({
       formData.append("name", values.name)
       formData.append("content", values.content)
       formData.append("source", values.source)
-      formData.append("work_type", values.work_type)
-      formData.append("start_date", format(values.start_date, "yyyy-MM-dd"))
-      formData.append("end_date", format(values.end_date, "yyyy-MM-dd"))
-      formData.append("intensity_type", values.intensity_type)
-      formData.append("intensity_value", values.intensity_value.toString())
+      formData.append("work_type", values.type)
+      formData.append("start_date", format(values.startDate, "yyyy-MM-dd"))
+      formData.append("end_date", format(values.endDate, "yyyy-MM-dd"))
+      formData.append("intensity_type", values.intensityType)
+      formData.append("intensity_value", values.intensityValue)
+
+     if (values.source === "innovation" && values.innovationStage) {
+        formData.append("innovation_stage", values.innovationStage)
+      }
+      if (values.source === "assistant" && values.assistantSalaryPaid) {
+        formData.append("assistant_salary_paid", values.assistantSalaryPaid)
+      }
       
-      // 只有学生才需要提交 mentor_reviewer_id
-      if (isStudent && values.mentor_reviewer_id) {
-        formData.append("mentor_reviewer_id", values.mentor_reviewer_id)
+      if (isStudent && values.mentor_reviewer) {
+        formData.append("mentor_reviewer_id", values.mentor_reviewer)
       }
 
       // 添加文件（如果有）
@@ -397,7 +321,7 @@ export default function WorkloadEditPage({
 
                     <FormField
                       control={form.control}
-                      name="work_type"
+                      name="type"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-500">工作类型</FormLabel>
@@ -426,10 +350,47 @@ export default function WorkloadEditPage({
                         </FormItem>
                       )}
                     />
+                    {/* 大创阶段 */}
+                  {form.watch("source") === "innovation" && (
+                    <FormField
+                        control={form.control}
+                        name="innovationStage"
+                        render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>大创阶段</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="请选择大创阶段" />
+                              </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {innovationStageOptions.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  )}
+
+                  {/* 助教工资 */}
+                  {form.watch("source") === "assistant" && (
+                    <FormField control={form.control} name="assistantSalaryPaid" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>已发助教工资</FormLabel>
+                        <FormControl><Input type="number" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  )}
 
                     <FormField
                       control={form.control}
-                      name="start_date"
+                      name="startDate"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel className="text-sm font-medium text-gray-500">开始日期</FormLabel>
@@ -454,7 +415,7 @@ export default function WorkloadEditPage({
 
                     <FormField
                       control={form.control}
-                      name="end_date"
+                      name="endDate"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel className="text-sm font-medium text-gray-500">结束日期</FormLabel>
@@ -479,7 +440,7 @@ export default function WorkloadEditPage({
 
                     <FormField
                       control={form.control}
-                      name="intensity_type"
+                      name="intensityType"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-500">工作强度类型</FormLabel>
@@ -511,7 +472,7 @@ export default function WorkloadEditPage({
 
                     <FormField
                       control={form.control}
-                      name="intensity_value"
+                      name="intensityValue"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-500">工作强度值</FormLabel>
@@ -532,7 +493,7 @@ export default function WorkloadEditPage({
                     {isStudent && (
                       <FormField
                         control={form.control}
-                        name="mentor_reviewer_id"
+                        name="mentor_reviewer"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-sm font-medium text-gray-500">审核导师</FormLabel>
