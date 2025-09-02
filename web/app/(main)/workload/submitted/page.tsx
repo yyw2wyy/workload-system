@@ -34,30 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
-import {sourceMap, typeMap, intensityTypeMap, statusMap } from "@/lib/types/workload"
+import {sourceMap, typeMap, intensityTypeMap, statusMap, Workload} from "@/lib/types/workload"
 
-// 工作量类型定义
-type Workload = {
-  id: number
-  name: string
-  source: keyof typeof sourceMap
-  work_type: keyof typeof typeMap
-  start_date: string
-  end_date: string
-  intensity_type: keyof typeof intensityTypeMap
-  intensity_value: number
-  mentor_reviewer: {
-    id: number
-    username: string
-    role: string
-  } | null
-  teacher_reviewer: {
-    id: number
-    username: string
-    role: string
-  } | null
-  status: keyof typeof statusMap
-}
 
 export default function WorkloadSubmittedPage() {
   const router = useRouter()

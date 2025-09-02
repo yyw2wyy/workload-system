@@ -23,37 +23,8 @@ import {
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { useAuthStore } from "@/lib/store/auth"
-import { sourceMap, typeMap, statusMap } from "@/lib/types/workload"
+import {sourceMap, typeMap, statusMap, Workload} from "@/lib/types/workload"
 
-// 工作量类型定义
-type Workload = {
-  id: number
-  name: string
-  content: string
-  source: keyof typeof sourceMap
-  work_type: keyof typeof typeMap
-  start_date: string
-  end_date: string
-  intensity_type: string
-  intensity_value: number
-  submitter: {
-    id: number
-    username: string
-    role: string
-  }
-  mentor_reviewer: {
-    id: number
-    username: string
-    role: string
-  } | null
-  teacher_reviewer: {
-    id: number
-    username: string
-    role: string
-  } | null
-  status: keyof typeof statusMap
-  created_at: string
-}
 
 export default function WorkloadReviewPage() {
   const router = useRouter()

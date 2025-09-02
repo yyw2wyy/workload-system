@@ -11,7 +11,7 @@ import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { Separator } from "@/components/ui/separator"
 import { FileIcon } from "lucide-react"
-import { sourceMap, typeMap, intensityTypeMap, statusMap, Workload } from "@/lib/types/workload"
+import {sourceMap, typeMap, intensityTypeMap, statusMap, Workload, innovationStageMap} from "@/lib/types/workload"
 
 export default function WorkloadDetailPage({
   params,
@@ -141,6 +141,20 @@ export default function WorkloadDetailPage({
                 <Label className="text-sm font-medium text-gray-500">工作类型</Label>
                 <div className="text-base">{typeMap[workload.work_type]}</div>
               </div>
+              {/* 如果是大创，则显示大创阶段 */}
+              {workload.source === "innovation" && workload.innovation_stage && (
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-medium text-gray-500">大创阶段</Label>
+                  <div className="text-base">{innovationStageMap[workload.innovation_stage]}</div>
+                </div>
+              )}
+              {/* 如果是助教，则显示已发助教工资 */}
+              {workload.source === "assistant" && workload.assistant_salary_paid !== null && (
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-medium text-gray-500">已发助教工资</Label>
+                  <div className="text-base">{workload.assistant_salary_paid} 元</div>
+                </div>
+              )}
               <div className="space-y-2.5">
                 <Label className="text-sm font-medium text-gray-500">开始日期</Label>
                 <div className="text-base">{format(new Date(workload.start_date), "yyyy年MM月dd日")}</div>

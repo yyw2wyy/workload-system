@@ -350,42 +350,54 @@ export default function WorkloadEditPage({
                         </FormItem>
                       )}
                     />
-                    {/* 大创阶段 */}
+                  {/* 大创阶段 */}
                   {form.watch("source") === "innovation" && (
                     <FormField
-                        control={form.control}
-                        name="innovationStage"
-                        render={({ field }) => (
-                          <FormItem>
-                          <FormLabel>大创阶段</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange}>
+                    control={form.control}
+                    name="innovationStage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">大创阶段</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                              <SelectTrigger>
-                                  <SelectValue placeholder="请选择大创阶段" />
-                              </SelectTrigger>
+                            <SelectTrigger className="h-11">
+                              <SelectValue placeholder="请选择大创阶段" />
+                            </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {innovationStageOptions.map(opt => (
-                                <SelectItem key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                </SelectItem>
+                            {innovationStageOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <FormMessage />
+                        <FormMessage className="empty:hidden" />
                       </FormItem>
-                    )} />
+                    )}
+                  />
                   )}
 
                   {/* 助教工资 */}
                   {form.watch("source") === "assistant" && (
-                    <FormField control={form.control} name="assistantSalaryPaid" render={({ field }) => (
+                   <FormField
+                    control={form.control}
+                    name="assistantSalaryPaid"
+                    render={({ field }) => (
                       <FormItem>
-                        <FormLabel>已发助教工资</FormLabel>
-                        <FormControl><Input type="number" {...field} /></FormControl>
-                        <FormMessage />
+                        <FormLabel className="text-base">已发助教工资</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="请输入已发助教工资（整数）"
+                            className="h-11"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage className="empty:hidden" />
                       </FormItem>
-                    )} />
+                    )}
+                  />
                   )}
 
                     <FormField

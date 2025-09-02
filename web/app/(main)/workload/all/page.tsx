@@ -23,40 +23,14 @@ import {
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { useAuthStore } from "@/lib/store/auth"
-import { sourceMap, typeMap, statusMap } from "@/lib/types/workload"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  sourceMap,
+  typeMap,
+  statusMap,
+  Workload
+} from "@/lib/types/workload"
 
-
-type Workload = {
-  id: number
-  name: string
-  content: string
-  source: keyof typeof sourceMap
-  work_type: keyof typeof typeMap
-  start_date: string
-  end_date: string
-  submitter: {
-    id: number
-    username: string
-    role: string
-  }
-  mentor_reviewer: {
-    id: number
-    username: string
-    role: string
-  } | null
-  teacher_reviewer: {
-    id: number
-    username: string
-    role: string
-  } | null
-  status: keyof typeof statusMap
-  mentor_comment: string | null
-  mentor_review_time: string | null
-  teacher_comment: string | null
-  teacher_review_time: string | null
-  created_at: string
-}
 
 export default function WorkloadAllPage() {
   const router = useRouter()
