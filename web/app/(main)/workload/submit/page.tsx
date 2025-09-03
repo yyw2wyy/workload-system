@@ -42,6 +42,7 @@ import {
   intensityTypeOptions,
   innovationStageOptions,
 } from "@/lib/types/workload"
+import {useAuthStore} from "@/lib/store/auth";
 
 type Reviewer = {
   id: number
@@ -90,6 +91,32 @@ export default function WorkloadSubmitPage() {
 
     fetchReviewers()
   }, [isStudent])
+
+  const [allUsers, setAllUsers] = useState<Reviewer[]>([]);
+  const authUser = useAuthStore((state) => state.user);
+
+  // 获取所有非老师用户
+  useEffect(() => {
+    if (sourceValue === "innovation") {
+      const fetchUsers = async () => {
+        try {
+          const response = await api.get("/user/list/");
+          const users = response.data.filter((u: Reviewer) => u.role !== "teacher");
+          setAllUsers(users);
+
+          // 初始化 shares：自动加入申请人（当前登录用户）
+          const submitterShare = {
+            user: authUser!.id,
+            percentage: 100,
+          };
+          form.setValue("shares", [submitterShare]);
+        } catch (error) {
+          toast.error("获取用户列表失败", { duration: 3000 });
+        }
+      };
+      fetchUsers();
+    }
+  }, [sourceValue, authUser, form]);
 
   // 处理文件选择
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,38 +167,17 @@ export default function WorkloadSubmitPage() {
   async function onSubmit(data: WorkloadFormValues) {
     try {
       setIsSubmitting(true);
-      
-      // 准备表单数据
-      const formData = new FormData();
-      formData.append("name", data.name);
-      formData.append("content", data.content);
-      formData.append("source", data.source);
-      formData.append("work_type", data.type);
-      formData.append("start_date", format(data.startDate, "yyyy-MM-dd"));
-      formData.append("end_date", format(data.endDate, "yyyy-MM-dd"));
-      formData.append("intensity_type", data.intensityType);
-      formData.append("intensity_value", data.intensityValue);
 
-      if (data.source === "innovation" && data.innovationStage) {
-        formData.append("innovation_stage", data.innovationStage)
-      }
-      if (data.source === "assistant" && data.assistantSalaryPaid) {
-        formData.append("assistant_salary_paid", data.assistantSalaryPaid)
-      }
-      
-      // 只有学生才需要提供审核导师
-      if (isStudent && data.mentor_reviewer) {
-        formData.append("mentor_reviewer_id", data.mentor_reviewer);
+      const submitterId = authUser!.id;
+      let shares = data.shares ?? [];
+
+      // 确保申请人存在
+      if (!shares.some(s => s.user === submitterId)) {
+        shares.unshift({ user: submitterId, percentage: 100 });
       }
 
-      // 添加文件（如果有）
-      if (fileList.length > 0) {
-        const file = fileList[0];
-        formData.append("attachments", file, file.name);
-      }
-
-      // 输出FormData内容以供调试
-      console.log("提交的数据：", {
+      // 构造 payload
+      const payload: any = {
         name: data.name,
         content: data.content,
         source: data.source,
@@ -181,20 +187,80 @@ export default function WorkloadSubmitPage() {
         intensity_type: data.intensityType,
         intensity_value: data.intensityValue,
         mentor_reviewer_id: isStudent ? data.mentor_reviewer : null,
-        attachments: fileList.length > 0 ? fileList[0].name : null,
-      });
+      };
 
-      // 调用后端 API
-      const response = await api.post("/workload/", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        // 添加超时设置
-        timeout: 60000, // 60秒
-      });
-      
-      // 检查响应
-      console.log("提交成功，响应：", response.data);
+      if (data.source === "innovation") {
+        payload.innovation_stage = data.innovationStage;
+        payload.shares = shares;
+      }
+      if (data.source === "assistant") {
+        payload.assistant_salary_paid = data.assistantSalaryPaid;
+      }
+      // 情况1：没有文件，直接 JSON 提交
+      if (fileList.length === 0) {
+         const response = await api.post("/workload/", payload, {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      else {
+        // 准备表单数据
+        const formData = new FormData();
+        formData.append("name", data.name);
+        formData.append("content", data.content);
+        formData.append("source", data.source);
+        formData.append("work_type", data.type);
+        formData.append("start_date", format(data.startDate, "yyyy-MM-dd"));
+        formData.append("end_date", format(data.endDate, "yyyy-MM-dd"));
+        formData.append("intensity_type", data.intensityType);
+        formData.append("intensity_value", data.intensityValue);
+
+        if (data.source === "innovation" && data.innovationStage) {
+          formData.append("innovation_stage", data.innovationStage)
+        }
+        if (data.source === "assistant" && data.assistantSalaryPaid) {
+          formData.append("assistant_salary_paid", data.assistantSalaryPaid)
+        }
+
+        // 只有学生才需要提供审核导师
+        if (isStudent && data.mentor_reviewer) {
+          formData.append("mentor_reviewer_id", data.mentor_reviewer);
+        }
+
+        // 添加文件（如果有）
+        if (fileList.length > 0) {
+          const file = fileList[0];
+          formData.append("attachments", file, file.name);
+        }
+        // if (data.source === "innovation" && data.shares) {
+        //   formData.append("shares", JSON.stringify(data.shares));
+        // }
+
+        // 输出FormData内容以供调试
+        console.log("提交的数据：", {
+          name: data.name,
+          content: data.content,
+          source: data.source,
+          work_type: data.type,
+          start_date: format(data.startDate, "yyyy-MM-dd"),
+          end_date: format(data.endDate, "yyyy-MM-dd"),
+          intensity_type: data.intensityType,
+          intensity_value: data.intensityValue,
+          mentor_reviewer_id: isStudent ? data.mentor_reviewer : null,
+          attachments: fileList.length > 0 ? fileList[0].name : null,
+        });
+
+        // 调用后端 API
+        const response = await api.post("/workload/", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          // 添加超时设置
+          timeout: 60000, // 60秒
+        });
+
+        // 检查响应
+        console.log("提交成功，响应：", response.data);
+      }
       
       toast.success("工作量提交成功", {
         description: "您的工作量已成功提交，等待审核",
@@ -345,6 +411,92 @@ export default function WorkloadSubmitPage() {
                       </FormItem>
                     )}
                   />
+                {sourceValue === "innovation" && (
+                  <FormField
+                    control={form.control}
+                    name="shares"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">参与人及占比</FormLabel>
+                        <div className="space-y-4">
+                          {field.value?.map((share, index) => {
+                            const userObj = allUsers.find((u) => u.id === share.user);
+                            const isSubmitter = share.user === authUser?.id;
+
+                            return (
+                              <div key={index} className="flex items-center space-x-4">
+                                {/* 用户选择（申请人不可改） */}
+                                <Select
+                                  disabled={isSubmitter}
+                                  value={share.user.toString()}
+                                  onValueChange={(val) => {
+                                    const updated = [...field.value];
+                                    updated[index].user = Number(val);
+                                    field.onChange(updated);
+                                  }}
+                                >
+                                  <SelectTrigger className="w-[200px]">
+                                    <SelectValue>
+                                      {userObj?.username || "选择参与人"}
+                                    </SelectValue>
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {allUsers.map((user) => (
+                                      <SelectItem key={user.id} value={user.id.toString()}>
+                                        {user.username}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+
+                                {/* 占比输入 */}
+                                <Input
+                                  type="number"
+                                  className="w-[100px]"
+                                  value={share.percentage}
+                                  onChange={(e) => {
+                                    const updated = [...field.value];
+                                    updated[index].percentage = Number(e.target.value);
+                                    field.onChange(updated);
+                                  }}
+                                />
+                                <span>%</span>
+
+                                {/* 删除按钮（申请人不可删） */}
+                                {!isSubmitter && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      const updated = field.value.filter((_, i) => i !== index);
+                                      field.onChange(updated);
+                                    }}
+                                  >
+                                    删除
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
+
+                          {/* 添加参与人按钮 */}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              const updated = field.value ? [...field.value] : [];
+                              updated.push({ user: 0, percentage: 0 });
+                              field.onChange(updated);
+                            }}
+                          >
+                            添加参与人
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                   {/* 动态显示：大创阶段 */}
                 {sourceValue === "innovation" && (
                   <FormField

@@ -205,3 +205,31 @@ class Workload(models.Model):
             except Exception as e:
                 print(f"删除文件失败: {e}")
         super().delete(*args, **kwargs)
+
+class WorkloadShare(models.Model):
+    """工作量占比（仅用于大创）"""
+    workload = models.ForeignKey(
+        'Workload',
+        on_delete=models.CASCADE,
+        related_name='shares',
+        verbose_name='关联工作量'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='workload_shares',
+        verbose_name='参与用户'
+    )
+    percentage = models.FloatField(
+        '占比',
+        validators=[MinValueValidator(0.0)],
+        help_text='当前用户的工作量占比，总和必须为100'
+    )
+
+    class Meta:
+        verbose_name = '工作量占比'
+        verbose_name_plural = '工作量占比'
+        unique_together = ('workload', 'user')  # 同一个工作量中不能重复添加同一个用户
+
+    def __str__(self):
+        return f"{self.user.username} - {self.percentage}% ({self.workload.name})"

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Workload
+from .models import Workload, WorkloadShare
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 import os
@@ -14,6 +14,15 @@ class UserSimpleSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'role']
 
+class WorkloadShareSerializer(serializers.ModelSerializer):
+    """大创工作量参与人及占比"""
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    user_info = UserSimpleSerializer(source='user', read_only=True)
+
+    class Meta:
+        model = WorkloadShare
+        fields = ['user', 'user_info', 'percentage']
+
 class WorkloadSerializer(serializers.ModelSerializer):
     """工作量序列化器"""
     submitter = UserSimpleSerializer(read_only=True)
@@ -26,6 +35,8 @@ class WorkloadSerializer(serializers.ModelSerializer):
     )
     attachments_url = serializers.SerializerMethodField()
     original_filename = serializers.SerializerMethodField()
+    # 新增字段：大创参与人及占比
+    shares = WorkloadShareSerializer(many=True, required=False)
 
     class Meta:
         model = Workload
@@ -36,7 +47,8 @@ class WorkloadSerializer(serializers.ModelSerializer):
             'attachments', 'attachments_url', 'original_filename', 'submitter', 
             'mentor_reviewer', 'mentor_reviewer_id', 'mentor_comment', 'mentor_review_time',
             'teacher_reviewer', 'teacher_comment', 'teacher_review_time',
-            'status', 'created_at', 'updated_at'
+            'status', 'created_at', 'updated_at',
+            'shares'
         ]
         read_only_fields = [
             'status', 'mentor_comment', 'teacher_comment',
@@ -92,6 +104,17 @@ class WorkloadSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 "innovation_stage": "大创类工作量必须选择阶段（立项前/立项后）"
             })
+        # 大创工作量：验证 shares
+        if source == 'innovation':
+            shares = data.get('shares')
+            if not shares or len(shares) == 0:
+                raise serializers.ValidationError({"shares": "大创类工作量必须指定参与人员及占比"})
+            total = sum(s['percentage'] for s in shares)
+            if abs(total - 100.0) > 1e-6:
+                raise serializers.ValidationError({"shares": "大创类工作量占比总和必须为100"})
+            submitter_id = request.user.id
+            if submitter_id not in [s['user'].id if isinstance(s['user'], User) else s['user'] for s in shares]:
+                raise serializers.ValidationError({"shares": "提交者必须包含在大创类工作量的占比中"})
 
         # 助教必须填写工资
         assistant_salary_paid = data.get('assistant_salary_paid') or getattr(self.instance, 'assistant_salary_paid',
@@ -107,6 +130,7 @@ class WorkloadSerializer(serializers.ModelSerializer):
         """创建工作量时设置提交者和审核者"""
         mentor_reviewer = validated_data.pop('mentor_reviewer_id', None)
         submitter = self.context['request'].user
+        shares_data = validated_data.pop('shares', None)
         
         # 如果指定了ID但数据库中已存在相同ID的记录，则移除ID让数据库自动生成
         if 'id' in validated_data and Workload.objects.filter(id=validated_data['id']).exists():
@@ -123,6 +147,10 @@ class WorkloadSerializer(serializers.ModelSerializer):
         try:
             # 创建工作量记录
             instance = super().create({**validated_data, 'submitter': submitter})
+            # 创建大创占比记录
+            if shares_data:
+                for s in shares_data:
+                    WorkloadShare.objects.create(workload=instance, user=s['user'], percentage=s['percentage'])
             return instance
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -130,6 +158,7 @@ class WorkloadSerializer(serializers.ModelSerializer):
             raise
 
     def update(self, instance, validated_data):
+        shares_data = validated_data.pop('shares', None)
         """更新工作量时设置审核者"""
         if 'mentor_reviewer_id' in validated_data:
             mentor_reviewer = validated_data.pop('mentor_reviewer_id')
@@ -151,6 +180,13 @@ class WorkloadSerializer(serializers.ModelSerializer):
         if instance.attachments:
             directory = os.path.dirname(instance.attachments.path)
             os.makedirs(directory, exist_ok=True)
+
+        # 更新大创占比
+        if shares_data is not None:
+            # 先删除原来的
+            instance.shares.all().delete()
+            for s in shares_data:
+                WorkloadShare.objects.create(workload=instance, user=s['user'], percentage=s['percentage'])
 
         return instance
 

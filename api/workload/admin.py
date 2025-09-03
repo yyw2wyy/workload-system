@@ -1,6 +1,51 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Workload
+from .models import Workload,WorkloadShare
+from django.forms.models import BaseInlineFormSet
+from django.core.exceptions import ValidationError
+
+class WorkloadShareFormSet(BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 排序获取第一个参与者
+        if self.instance.pk:  # 只有存在父对象时
+            shares = list(self.instance.shares.order_by('id'))
+            if shares:
+                first_share_id = shares[0].id
+                for form in self.forms:
+                    if form.instance.pk == first_share_id:
+                        # 第一个参与者 user 字段只读
+                        form.fields['user'].disabled = True
+                        # 第一个参与者不可删除
+                        form.can_delete = False
+
+    def clean(self):
+        """校验占比总和必须为100"""
+        super().clean()
+        total_percentage = 0
+        for form in self.forms:
+            if form.cleaned_data.get('DELETE'):
+                continue
+            percentage = form.cleaned_data.get('percentage')
+            if percentage is not None:
+                total_percentage += percentage
+
+        # 如果大创存在参与者，检查总和
+        if self.instance.source == 'innovation' and total_percentage != 100:
+            raise ValidationError('所有参与者的占比总和必须为100%')
+
+
+class WorkloadShareInline(admin.TabularInline):
+    """大创参与者占比管理"""
+    model = WorkloadShare
+    extra = 0  # 默认不增加额外空行
+    fields = ('user', 'percentage')
+    formset = WorkloadShareFormSet
+
+    # 删除权限通过 formset 控制
+    def has_delete_permission(self, request, obj=None):
+        return True  # 表单内会控制第一个参与者不可删除
+
 
 @admin.register(Workload)
 class WorkloadAdmin(admin.ModelAdmin):
@@ -17,6 +62,7 @@ class WorkloadAdmin(admin.ModelAdmin):
     ]
     date_hierarchy = 'created_at'
     readonly_fields = ['created_at', 'updated_at', 'preview_attachments']
+    inlines = []
 
     def get_fieldsets(self, request, obj=None):
         """根据 source 动态调整显示字段"""
@@ -52,6 +98,16 @@ class WorkloadAdmin(admin.ModelAdmin):
                 'name', 'content', 'source', 'innovation_stage',
                 'work_type', 'start_date', 'end_date'
             )
+
+        if obj and obj.source == 'innovation':
+            fieldsets[0][1]['fields'] = (
+                'name', 'content', 'source', 'innovation_stage',
+                'work_type', 'start_date', 'end_date'
+            )
+            # 动态添加inline管理大创参与者
+            self.inlines = [WorkloadShareInline]
+        else:
+            self.inlines = []
 
         # 动态插入助教工资字段
         if obj and obj.source == 'assistant':

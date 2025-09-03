@@ -72,6 +72,16 @@ export const intensityTypeOptions = [
   { value: "weekly", label: "每周" },
 ] as const
 
+export type WorkloadShare = {
+  user: number
+  user_info: {
+    id: number
+    username: string
+    role: string
+  }
+  percentage: number
+}
+
 // 类型定义
 export type WorkloadSource = keyof typeof sourceMap
 export type InnovationStage = keyof typeof innovationStageMap
@@ -118,6 +128,7 @@ export type Workload = {
   teacher_review_time: string | null
   created_at: string
   updated_at: string
+  shares?: WorkloadShare[]
 }
 
 // 表单验证模式
@@ -144,6 +155,14 @@ export const workloadFormSchema = z.object({
   assistantSalaryPaid: z.string().optional(),
   attachments: z.any().optional(),
   mentor_reviewer: z.string().optional(),
+  shares: z
+    .array(
+      z.object({
+        user: z.number({ required_error: "请选择参与人" }),
+        percentage: z.number({ required_error: "请输入占比" }).min(0).max(100),
+      })
+    )
+   .default([]),
 }).refine((data) => {
   if (!data.startDate || !data.endDate) return true
   return data.endDate >= data.startDate
@@ -172,6 +191,14 @@ export const workloadFormSchema = z.object({
 }, {
   message: "请输入已发助教工资（整数）",
   path: ["assistantSalaryPaid"],
+}).refine((data) => {
+  if (data.source !== "innovation") return true
+  if (!data.shares || data.shares.length === 0) return false
+  const total = data.shares.reduce((sum, s) => sum + s.percentage, 0)
+  return Math.abs(total - 100) < 1e-6
+}, {
+  message: "大创类工作量的占比总和必须为100",
+  path: ["shares"],
 })
 
 // 表单类型定义
@@ -188,4 +215,5 @@ export const defaultFormValues: Partial<WorkloadFormValues> = {
   innovationStage: "",
   assistantSalaryPaid: "",
   mentor_reviewer: "",
+  shares: [],
 } 
