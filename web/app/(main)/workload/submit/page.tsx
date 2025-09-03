@@ -167,17 +167,40 @@ export default function WorkloadSubmitPage() {
   async function onSubmit(data: WorkloadFormValues) {
     try {
       setIsSubmitting(true);
+      // 准备表单数据
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("content", data.content);
+      formData.append("source", data.source);
+      formData.append("work_type", data.type);
+      formData.append("start_date", format(data.startDate, "yyyy-MM-dd"));
+      formData.append("end_date", format(data.endDate, "yyyy-MM-dd"));
+      formData.append("intensity_type", data.intensityType);
+      formData.append("intensity_value", data.intensityValue);
 
-      const submitterId = authUser!.id;
-      let shares = data.shares ?? [];
-
-      // 确保申请人存在
-      if (!shares.some(s => s.user === submitterId)) {
-        shares.unshift({ user: submitterId, percentage: 100 });
+      if (data.source === "innovation" && data.innovationStage) {
+        formData.append("innovation_stage", data.innovationStage)
+      }
+      if (data.source === "assistant" && data.assistantSalaryPaid) {
+        formData.append("assistant_salary_paid", data.assistantSalaryPaid)
       }
 
-      // 构造 payload
-      const payload: any = {
+      // 只有学生才需要提供审核导师
+      if (isStudent && data.mentor_reviewer) {
+        formData.append("mentor_reviewer_id", data.mentor_reviewer);
+      }
+
+      // 添加文件（如果有）
+      if (fileList.length > 0) {
+        const file = fileList[0];
+        formData.append("attachments", file, file.name);
+      }
+      if (data.source === "innovation" && data.shares) {
+        formData.append("shares", JSON.stringify(data.shares));
+      }
+
+      // 输出FormData内容以供调试
+      console.log("提交的数据：", {
         name: data.name,
         content: data.content,
         source: data.source,
@@ -187,81 +210,20 @@ export default function WorkloadSubmitPage() {
         intensity_type: data.intensityType,
         intensity_value: data.intensityValue,
         mentor_reviewer_id: isStudent ? data.mentor_reviewer : null,
-      };
+        attachments: fileList.length > 0 ? fileList[0].name : null,
+      });
 
-      if (data.source === "innovation") {
-        payload.innovation_stage = data.innovationStage;
-        payload.shares = shares;
-      }
-      if (data.source === "assistant") {
-        payload.assistant_salary_paid = data.assistantSalaryPaid;
-      }
-      // 情况1：没有文件，直接 JSON 提交
-      if (fileList.length === 0) {
-         const response = await api.post("/workload/", payload, {
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-      else {
-        // 准备表单数据
-        const formData = new FormData();
-        formData.append("name", data.name);
-        formData.append("content", data.content);
-        formData.append("source", data.source);
-        formData.append("work_type", data.type);
-        formData.append("start_date", format(data.startDate, "yyyy-MM-dd"));
-        formData.append("end_date", format(data.endDate, "yyyy-MM-dd"));
-        formData.append("intensity_type", data.intensityType);
-        formData.append("intensity_value", data.intensityValue);
+      // 调用后端 API
+      const response = await api.post("/workload/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        // 添加超时设置
+        timeout: 60000, // 60秒
+      });
 
-        if (data.source === "innovation" && data.innovationStage) {
-          formData.append("innovation_stage", data.innovationStage)
-        }
-        if (data.source === "assistant" && data.assistantSalaryPaid) {
-          formData.append("assistant_salary_paid", data.assistantSalaryPaid)
-        }
-
-        // 只有学生才需要提供审核导师
-        if (isStudent && data.mentor_reviewer) {
-          formData.append("mentor_reviewer_id", data.mentor_reviewer);
-        }
-
-        // 添加文件（如果有）
-        if (fileList.length > 0) {
-          const file = fileList[0];
-          formData.append("attachments", file, file.name);
-        }
-        // if (data.source === "innovation" && data.shares) {
-        //   formData.append("shares", JSON.stringify(data.shares));
-        // }
-
-        // 输出FormData内容以供调试
-        console.log("提交的数据：", {
-          name: data.name,
-          content: data.content,
-          source: data.source,
-          work_type: data.type,
-          start_date: format(data.startDate, "yyyy-MM-dd"),
-          end_date: format(data.endDate, "yyyy-MM-dd"),
-          intensity_type: data.intensityType,
-          intensity_value: data.intensityValue,
-          mentor_reviewer_id: isStudent ? data.mentor_reviewer : null,
-          attachments: fileList.length > 0 ? fileList[0].name : null,
-        });
-
-        // 调用后端 API
-        const response = await api.post("/workload/", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          // 添加超时设置
-          timeout: 60000, // 60秒
-        });
-
-        // 检查响应
-        console.log("提交成功，响应：", response.data);
-      }
-      
+      // 检查响应
+      console.log("提交成功，响应：", response.data);
       toast.success("工作量提交成功", {
         description: "您的工作量已成功提交，等待审核",
         duration: 3000,

@@ -5,6 +5,7 @@ from django.utils import timezone
 import os
 import logging
 from datetime import timedelta,date
+import json
 
 User = get_user_model()
 
@@ -73,6 +74,19 @@ class WorkloadSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """验证数据"""
         request = self.context.get('request')
+        # 统一处理 shares（前端可能传字符串）
+        raw_shares = self.initial_data.get('shares')
+        if raw_shares and isinstance(raw_shares, str):
+            try:
+                shares_parsed = json.loads(raw_shares)
+            except json.JSONDecodeError:
+                raise serializers.ValidationError({"shares": "必须是合法的 JSON 数组"})
+
+            # 再走嵌套 serializer 校验
+            share_serializer = WorkloadShareSerializer(data=shares_parsed, many=True)
+            share_serializer.is_valid(raise_exception=True)
+            data['shares'] = share_serializer.validated_data
+
         if not request or not request.user:
             raise serializers.ValidationError("无法获取当前用户信息")
 
