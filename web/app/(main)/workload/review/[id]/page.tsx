@@ -167,6 +167,20 @@ export default function WorkloadReviewPage({ params }: { params: Promise<{ id: s
                   <div className="text-base">{innovationStageMap[workload.innovation_stage]}</div>
                 </div>
               )}
+              {/* 如果是大创，则显示参与人 */}
+              {workload.source === "innovation" && workload.shares && workload.shares.length > 0 && (
+                <div className="col-span-1 sm:col-span-2 space-y-2.5">
+                  <Label className="text-sm font-medium text-gray-500">参与人</Label>
+                  <div className="rounded-lg border bg-gray-50/50 p-4 space-y-2">
+                    {workload.shares.map((share) => (
+                      <div key={share.user} className="flex justify-between items-center text-base">
+                        <span>{share.user_info.username}</span>
+                        <span className="text-gray-600">{share.percentage}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* 如果是助教，则显示已发助教工资 */}
               {workload.source === "assistant" && workload.assistant_salary_paid !== null && (
                 <div className="space-y-2.5">
