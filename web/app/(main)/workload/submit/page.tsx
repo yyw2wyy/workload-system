@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { api } from "@/lib/axios"
-import { DatePicker, ConfigProvider, Select as AntdSelect } from "antd"
+import { DatePicker, ConfigProvider, Select as AntdSelect, Modal } from "antd"
 import dayjs from "dayjs"
 import zhCN from "antd/locale/zh_CN"
 import "dayjs/locale/zh-cn"
@@ -43,6 +43,7 @@ import {
   innovationStageOptions,
 } from "@/lib/types/workload"
 import {useAuthStore} from "@/lib/store/auth";
+import type { Announcement } from "@/lib/types/announcement"
 
 type Reviewer = {
   id: number
@@ -63,6 +64,34 @@ export default function WorkloadSubmitPage() {
   const [reviewers, setReviewers] = useState<Reviewer[]>([])
   const [fileList, setFileList] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 弹窗相关状态
+  const [announcement, setAnnouncement] = useState<Announcement | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // 选择来源时拉取公告
+  useEffect(() => {
+    if (!sourceValue) return
+    const fetchAnnouncement = async () => {
+      try {
+        const { data } = await api.get<Announcement[]>(
+          `/announcement/?source=${sourceValue}`
+        )
+        if (Array.isArray(data) && data.length > 0) {
+          // 默认展示第一条公告
+          setAnnouncement(data[0])
+          setIsModalOpen(true)
+        } else {
+          setAnnouncement(null)
+          setIsModalOpen(false)
+        }
+      } catch (err) {
+        console.error("获取公告失败:", err)
+      }
+    }
+    fetchAnnouncement()
+  }, [sourceValue])
+
 
   // 从本地存储获取用户角色
   useEffect(() => {
@@ -715,6 +744,19 @@ export default function WorkloadSubmitPage() {
           </Card>
         </div>
       </div>
+      {/* 公告弹窗 */}
+      <Modal
+        title={announcement?.title}
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={[
+          <Button key="ok" onClick={() => setIsModalOpen(false)}>
+            确认
+          </Button>,
+        ]}
+      >
+        <p>{announcement?.content}</p>
+      </Modal>
     </ConfigProvider>
   )
 } 

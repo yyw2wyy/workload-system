@@ -19,7 +19,8 @@ export default function AnnouncementPage() {
         const { data } = await api.get<Announcement[]>("/announcement/")
         // 确保返回的是数组
         if (Array.isArray(data)) {
-          setAnnouncements(data)
+          const generalAnnouncements = data.filter(a => !a.source)
+          setAnnouncements(generalAnnouncements)
         } else {
           throw new Error("获取公告数据格式错误")
         }

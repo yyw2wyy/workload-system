@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from .models import Announcement
@@ -16,5 +15,9 @@ class AnnouncementViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """获取公告列表"""
         queryset = super().get_queryset()
+        # 支持通过 ?source=horizontal 过滤
+        source = self.request.query_params.get('source')
+        if source:
+            queryset = queryset.filter(source=source)
         # 按创建时间倒序排序
         return queryset.order_by('-created_at')

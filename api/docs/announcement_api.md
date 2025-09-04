@@ -22,6 +22,8 @@
 - **接口URL**: `/api/announcement/`
 - **请求方法**: GET
 - **权限要求**: 已登录用户
+- **支持参数**:
+  - `source` (可选): 过滤某个工作来源的公告，例如 `/api/announcement/?source=horizontal`
 
 #### 响应说明
 
@@ -40,6 +42,7 @@
             "title": "系统维护通知",
             "content": "系统将于今晚进行维护...",
             "type": "notice",
+            "source": "horizontal",
             "created_at": "2024-03-19T10:00:00Z",
             "updated_at": "2024-03-19T10:00:00Z"
         },
@@ -48,6 +51,7 @@
             "title": "重要公告",
             "content": "请各位同学注意...",
             "type": "announcement",
+            "source": "horizontal",
             "created_at": "2024-03-19T09:00:00Z",
             "updated_at": "2024-03-19T09:00:00Z"
         }
@@ -75,6 +79,7 @@
     "title": "系统维护通知",
     "content": "系统将于今晚进行维护...",
     "type": "notice",
+    "source": "horizontal",
     "created_at": "2024-03-19T10:00:00Z",
     "updated_at": "2024-03-19T10:00:00Z"
 }
@@ -119,9 +124,24 @@
 | announcement| 公告 |
 | warning     | 警告 |
 
+### 工作来源说明
+
+| 类型值        | 说明     |
+| ------------- | -------- |
+| horizontal    | 横向     |
+| innovation    | 大创     |
+| hardware      | 硬件小组 |
+| assessment    | 考核小组 |
+| documentation | 材料撰写 |
+| assistant     | 助教     |
+| other         | 其他     |
+
+---
+
 ## 注意事项
 
 1. 所有接口都需要用户登录才能访问
 2. 公告列表按创建时间倒序排序
 3. 时间字段使用 ISO 8601 格式
 4. 接口支持分页，默认每页 10 条记录 
+5. `source` 参数可用于过滤某个来源的公告
