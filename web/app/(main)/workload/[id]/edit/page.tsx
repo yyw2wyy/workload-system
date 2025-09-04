@@ -44,6 +44,9 @@ import {
     workloadFormSchema,
     defaultFormValues,
 } from "@/lib/types/workload"
+import { useAuthStore } from "@/lib/store/auth"
+
+type Reviewer = { id: number; username: string; role: string }
 
 export default function WorkloadEditPage({
   params,
@@ -58,7 +61,9 @@ export default function WorkloadEditPage({
   const [workload, setWorkload] = useState<Workload | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isStudent, setIsStudent] = useState(false)
-  const [reviewers, setReviewers] = useState<Array<{ id: number; username: string }>>([])
+  const [reviewers, setReviewers] = useState<Reviewer[]>([])
+  const [allUsers, setAllUsers] = useState<Reviewer[]>([])
+  const authUser = useAuthStore((state) => state.user)
 
   // 从本地存储获取用户角色
   useEffect(() => {
@@ -74,7 +79,7 @@ export default function WorkloadEditPage({
       try {
         const response = await api.get("/user/list/")
         // 筛选出导师角色的用户
-        const mentors = response.data.filter((user: any) => user.role === "mentor")
+        const mentors = response.data.filter((user: Reviewer) => user.role === "mentor")
         setReviewers(mentors)
       } catch (error) {
         console.error("获取审核人列表失败:", error)
@@ -98,15 +103,19 @@ export default function WorkloadEditPage({
   useEffect(() => {
     const fetchWorkload = async () => {
       try {
-        const [workloadRes, reviewersRes] = await Promise.all([
+        const [workloadRes, usersRes] = await Promise.all([
           api.get(`/workload/${resolvedParams.id}/`),
           api.get("/user/list/"),
         ])
 
         const workload: Workload = workloadRes.data
         // 过滤出导师角色的用户
-        const mentors = reviewersRes.data.filter((user: any) => user.role === "mentor")
+        const mentors = usersRes.data.filter((u: Reviewer) => u.role === "mentor")
         setReviewers(mentors)
+
+        // 非 teacher 用户
+        const users = usersRes.data.filter((u: Reviewer) => u.role !== "teacher")
+        setAllUsers(users)
 
         // 填充表单数据
         form.reset({
@@ -121,6 +130,7 @@ export default function WorkloadEditPage({
           innovationStage: workload.innovation_stage || "",
           assistantSalaryPaid: workload.assistant_salary_paid?.toString() || "",
           mentor_reviewer: workload.mentor_reviewer?.id.toString() || "",
+          shares: workload.shares || [], // 初始化 shares
         })
 
         // 设置工作量数据
@@ -162,6 +172,7 @@ export default function WorkloadEditPage({
 
      if (values.source === "innovation" && values.innovationStage) {
         formData.append("innovation_stage", values.innovationStage)
+        formData.append("shares", JSON.stringify(values.shares || []))
       }
       if (values.source === "assistant" && values.assistantSalaryPaid) {
         formData.append("assistant_salary_paid", values.assistantSalaryPaid)
@@ -377,7 +388,91 @@ export default function WorkloadEditPage({
                     )}
                   />
                   )}
+                  {/* shares 参与人及占比 */}
+                    {form.watch("source") === "innovation" && (
+                      <FormField
+                        control={form.control}
+                        name="shares"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base">参与人及占比</FormLabel>
+                            <div className="space-y-4">
+                              {field.value?.map((share, index) => {
+                                const userObj = allUsers.find((u) => u.id === share.user);
+                                const isSubmitter = share.user === authUser?.id;
 
+                                return (
+                                  <div key={index} className="flex items-center space-x-4">
+                                    {/* 用户选择（申请人不可改） */}
+                                    <Select
+                                      disabled={isSubmitter}
+                                      value={share.user?.toString() || ""}
+                                      onValueChange={(val) => {
+                                        const updated = [...field.value];
+                                        updated[index].user = Number(val);
+                                        field.onChange(updated);
+                                      }}
+                                    >
+                                      <SelectTrigger className="w-[200px]">
+                                        <SelectValue>
+                                          {userObj?.username || "选择参与人"}
+                                        </SelectValue>
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {allUsers.map((user) => (
+                                          <SelectItem key={user.id} value={user.id.toString()}>
+                                            {user.username}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+
+                                    {/* 占比输入 */}
+                                    <Input
+                                      type="number"
+                                      className="w-[100px]"
+                                      value={share.percentage}
+                                      onChange={(e) => {
+                                        const updated = [...field.value];
+                                        updated[index].percentage = Number(e.target.value);
+                                        field.onChange(updated);
+                                      }}
+                                    />
+                                    <span>%</span>
+                                    {/* 删除按钮（申请人不可删） */}
+                                    {!isSubmitter && (
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          const updated = field.value.filter((_, i) => i !== index);
+                                          field.onChange(updated);
+                                        }}
+                                      >
+                                        删除
+                                      </Button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                              {/* 添加参与人按钮 */}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  const updated = field.value ? [...field.value] : [];
+                                  updated.push({ user: 0, percentage: 0 });
+                                  field.onChange(updated);
+                                }}
+                              >
+                                添加参与人
+                              </Button>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                   {/* 助教工资 */}
                   {form.watch("source") === "assistant" && (
                    <FormField
@@ -399,7 +494,6 @@ export default function WorkloadEditPage({
                     )}
                   />
                   )}
-
                     <FormField
                       control={form.control}
                       name="startDate"
