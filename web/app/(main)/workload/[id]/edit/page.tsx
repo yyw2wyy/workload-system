@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { DatePicker, ConfigProvider } from "antd"
+import { DatePicker, ConfigProvider, Select as AntdSelect } from "antd"
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import dayjs from "dayjs"
@@ -404,28 +404,26 @@ export default function WorkloadEditPage({
                                 return (
                                   <div key={index} className="flex items-center space-x-4">
                                     {/* 用户选择（申请人不可改） */}
-                                    <Select
+                                    <AntdSelect
+                                      showSearch
+                                      style={{ width: 200 }}
+                                      placeholder="选择参与人"
+                                      optionFilterProp="label"
+                                      value={share.user || undefined}
                                       disabled={isSubmitter}
-                                      value={share.user?.toString() || ""}
-                                      onValueChange={(val) => {
-                                        const updated = [...field.value];
-                                        updated[index].user = Number(val);
-                                        field.onChange(updated);
+                                      onChange={(val) => {
+                                        const updated = [...field.value]
+                                        updated[index].user = Number(val)
+                                        field.onChange(updated)
                                       }}
-                                    >
-                                      <SelectTrigger className="w-[200px]">
-                                        <SelectValue>
-                                          {userObj?.username || "选择参与人"}
-                                        </SelectValue>
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {allUsers.map((user) => (
-                                          <SelectItem key={user.id} value={user.id.toString()}>
-                                            {user.username}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                      filterOption={(input, option) =>
+                                        (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
+                                      }
+                                      options={allUsers.map((user) => ({
+                                        label: user.username,
+                                        value: user.id,
+                                      }))}
+                                    />
 
                                     {/* 占比输入 */}
                                     <Input
