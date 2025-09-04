@@ -492,7 +492,7 @@ export default function WorkloadEditPage({
                     )}
                   />
                   )}
-                    <FormField
+                  <FormField
                       control={form.control}
                       name="startDate"
                       render={({ field }) => (
@@ -515,9 +515,9 @@ export default function WorkloadEditPage({
                           <FormMessage className="empty:hidden" />
                         </FormItem>
                       )}
-                    />
+                  />
 
-                    <FormField
+                  <FormField
                       control={form.control}
                       name="endDate"
                       render={({ field }) => (
@@ -540,9 +540,9 @@ export default function WorkloadEditPage({
                           <FormMessage className="empty:hidden" />
                         </FormItem>
                       )}
-                    />
+                  />
 
-                    <FormField
+                  <FormField
                       control={form.control}
                       name="intensityType"
                       render={({ field }) => (
@@ -572,9 +572,9 @@ export default function WorkloadEditPage({
                           <FormMessage className="empty:hidden" />
                         </FormItem>
                       )}
-                    />
+                  />
 
-                    <FormField
+                  <FormField
                       control={form.control}
                       name="intensityValue"
                       render={({ field }) => (
@@ -592,9 +592,9 @@ export default function WorkloadEditPage({
                           <FormMessage className="empty:hidden" />
                         </FormItem>
                       )}
-                    />
+                  />
 
-                    {isStudent && (
+                  {isStudent && (
                       <FormField
                         control={form.control}
                         name="mentor_reviewer"
@@ -627,59 +627,86 @@ export default function WorkloadEditPage({
                         )}
                       />
                     )}
-                  </div>
+                   </div>
 
-                  <div className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="attachments"
-                      render={({ field: { value, onChange, ...field } }) => (
+                 <div className="space-y-6">
+                   <FormField
+                    control={form.control}
+                    name="attachments"
+                    render={({ field: { value, onChange, ...field } }) => {
+                      const hasFile = value || workload?.attachments_url; // 是否已有文件
+                      return (
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-500">证明材料</FormLabel>
                           <FormControl>
                             <div className="space-y-4">
-                              <Input
+                              <input
                                 type="file"
+                                id="file-upload"
+                                className="hidden"
                                 onChange={(e) => {
                                   const file = e.target.files?.[0]
-                                  if (file) {
-                                    // 检查文件大小（10MB）
-                                    const isLt10M = file.size / 1024 / 1024 < 10
-                                    if (!isLt10M) {
-                                      toast.error("文件过大", {
-                                        description: "文件大小不能超过10MB",
-                                        duration: 3000,
-                                      })
-                                      return
-                                    }
+                                  if (!file) return;
 
-                                    // 检查文件类型
-                                    const allowedTypes = [
-                                      'image/jpeg',
-                                      'image/png',
-                                      'image/gif',
-                                      'application/pdf',
-                                      'application/msword',
-                                      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                                      'application/vnd.ms-excel',
-                                      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                                    ]
-                                    
-                                    if (!allowedTypes.includes(file.type)) {
-                                      toast.error("文件类型不支持", {
-                                        description: "请上传常见的文档格式或图片格式",
-                                        duration: 3000,
-                                      })
-                                      return
-                                    }
-
-                                    onChange(file)
+                                  // 文件大小校验
+                                  if (file.size / 1024 / 1024 > 10) {
+                                    toast.error("文件过大", {
+                                      description: "文件大小不能超过10MB",
+                                      duration: 3000,
+                                    })
+                                    return
                                   }
+
+                                  // 文件类型校验
+                                  const allowedTypes = [
+                                    'image/jpeg',
+                                    'image/png',
+                                    'image/gif',
+                                    'application/pdf',
+                                    'application/msword',
+                                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                    'application/vnd.ms-excel',
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                                  ]
+                                  if (!allowedTypes.includes(file.type)) {
+                                    toast.error("文件类型不支持", {
+                                      description: "请上传常见的文档格式或图片格式",
+                                      duration: 3000,
+                                    })
+                                    return
+                                  }
+
+                                  onChange(file)
                                 }}
-                                className="h-10 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
                                 {...field}
                               />
-                              {workload?.attachments_url && (
+
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => document.getElementById('file-upload')?.click()}
+                              >
+                                {hasFile ? '替换文件' : '上传文件'}
+                              </Button>
+
+                              {/* 显示已选文件 */}
+                              {value && (
+                                <div className="flex items-center justify-between p-2 border rounded-md">
+                                  <span className="text-sm truncate">{value.name}</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => onChange(null)}
+                                  >
+                                    移除
+                                  </Button>
+                                </div>
+                              )}
+
+                              {/* 显示原来上传的文件 */}
+                              {!value && workload?.attachments_url && (
                                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                                   <span>当前文件：</span>
                                   <a
@@ -700,11 +727,11 @@ export default function WorkloadEditPage({
                           </FormDescription>
                           <FormMessage className="empty:hidden" />
                         </FormItem>
-                      )}
+                      );
+                     }}
                     />
-                  </div>
-
-                  <div className="flex justify-end space-x-4">
+                   </div>
+                   <div className="flex justify-end space-x-4">
                     <Button
                       type="button"
                       variant="outline"

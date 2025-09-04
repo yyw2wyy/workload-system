@@ -7,13 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { useAuthStore } from "@/lib/store/auth"
@@ -264,7 +257,7 @@ export default function WorkloadReviewPage({ params }: { params: Promise<{ id: s
                       {workload.mentor_comment}
                     </div>
                     <div className="text-sm text-gray-500">
-                      审核时间：{workload.mentor_review_time 
+                      审核时间：{workload.mentor_review_time
                         ? format(new Date(workload.mentor_review_time), "yyyy年MM月dd日 HH:mm:ss")
                         : '-'}
                     </div>
@@ -320,7 +313,7 @@ export default function WorkloadReviewPage({ params }: { params: Promise<{ id: s
               >
                 返回
               </Button>
-              <Button 
+              <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting || !reviewStatus || !comment}
                 className="h-10 px-6 bg-red-600 hover:bg-red-500"
@@ -333,4 +326,4 @@ export default function WorkloadReviewPage({ params }: { params: Promise<{ id: s
       </div>
     </div>
   )
-} 
+}
