@@ -341,6 +341,34 @@ export default function WorkloadSubmitPage() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
+                  name="source"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">工作量来源</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="请选择工作量来源" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {sourceOptions.map((option) => (
+                            <SelectItem
+                              key={option.value}
+                              value={option.value}
+                              className="cursor-pointer hover:bg-gray-100"
+                            >
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="empty:hidden" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
@@ -374,34 +402,6 @@ export default function WorkloadSubmitPage() {
                   )}
                 />
                 <div className="grid grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="source"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base">工作量来源</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="h-11">
-                              <SelectValue placeholder="请选择工作量来源" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {sourceOptions.map((option) => (
-                              <SelectItem 
-                                key={option.value} 
-                                value={option.value}
-                                className="cursor-pointer hover:bg-gray-100"
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
                 {sourceValue === "innovation" && (
                   <FormField
                     control={form.control}
@@ -432,10 +432,18 @@ export default function WorkloadSubmitPage() {
                                   filterOption={(input, option) =>
                                     (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
                                   }
-                                  options={allUsers.map((user) => ({
-                                    label: user.username,
-                                    value: user.id,
-                                  }))}
+                                  options={allUsers
+                                    .filter((user) => {
+                                      // 过滤掉已经选择的用户（排除自己和当前行）
+                                      const isAlreadySelected = field.value.some(
+                                        (s, i) => s.user === user.id && i !== index
+                                      );
+                                      return !isAlreadySelected;
+                                    })
+                                    .map((user) => ({
+                                      label: user.username,
+                                      value: user.id,
+                                    }))}
                                 />
 
                                 {/* 占比输入 */}
