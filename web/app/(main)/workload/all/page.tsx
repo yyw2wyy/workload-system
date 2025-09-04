@@ -209,9 +209,15 @@ export default function WorkloadAllPage() {
   // 处理全选/取消全选
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedWorkloads(currentWorkloads.map(w => w.id))
+      // 将当前页所有未选中的 id 添加到 selectedWorkloads
+      setSelectedWorkloads(prev => {
+        const currentIds = currentWorkloads.map(w => w.id)
+        const newSelected = Array.from(new Set([...prev, ...currentIds]))
+        return newSelected
+      })
     } else {
-      setSelectedWorkloads([])
+      // 取消当前页的所有选择，但保留其他页
+      setSelectedWorkloads(prev => prev.filter(id => !currentWorkloads.some(w => w.id === id)))
     }
   }
 
@@ -395,7 +401,7 @@ export default function WorkloadAllPage() {
                 <TableRow className="bg-gray-50">
                   <TableHead className="w-[50px]">
                     <Checkbox
-                      checked={currentWorkloads.length > 0 && selectedWorkloads.length === currentWorkloads.length}
+                      checked={currentWorkloads.every(w => selectedWorkloads.includes(w.id))}
                       onCheckedChange={(checked: boolean) => handleSelectAll(checked)}
                       aria-label="全选"
                     />

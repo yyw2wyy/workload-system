@@ -332,7 +332,7 @@ class WorkloadViewSet(viewsets.ModelViewSet):
                 '提交人', '工作量名称', '工作量内容', '工作来源', '工作类型',
                 '开始日期', '结束日期', '工作强度类型', '工作强度值', '状态',
                 '导师评语', '导师审核时间', '教师评语', '教师审核时间',
-                '创建时间'
+                '创建时间', '大创阶段', '参与人及占比', '已发助教工资'
             ]
             for col, header in enumerate(headers, 1):
                 cell = ws.cell(row=1, column=col, value=header)
@@ -357,6 +357,23 @@ class WorkloadViewSet(viewsets.ModelViewSet):
                 ws.cell(row=row, column=13, value=workload.teacher_comment)
                 ws.cell(row=row, column=14, value=workload.teacher_review_time.strftime('%Y-%m-%d %H:%M:%S') if workload.teacher_review_time else '')
                 ws.cell(row=row, column=15, value=workload.created_at.strftime('%Y-%m-%d %H:%M:%S'))
+
+                # 大创阶段（仅当来源为大创）
+                ws.cell(row=row, column=16,
+                        value=workload.get_source_display() == '大创' and workload.get_innovation_stage_display() or '')
+
+                # 大创参与人及占比
+                if workload.source == 'innovation':
+                    share_text = "; ".join(
+                        [f"{share.user.username}:{share.percentage}%" for share in workload.shares.all()]
+                    )
+                    ws.cell(row=row, column=17, value=share_text)
+                else:
+                    ws.cell(row=row, column=17, value='')
+
+                # 已发助教工资（仅当来源为助教）
+                ws.cell(row=row, column=18,
+                        value=workload.assistant_salary_paid if workload.source == 'assistant' else '')
 
             # 调整列宽
             for column in ws.columns:

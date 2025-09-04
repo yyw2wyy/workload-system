@@ -755,7 +755,7 @@ export default function WorkloadSubmitPage() {
           </Button>,
         ]}
       >
-        <p>{announcement?.content}</p>
+        <p style={{ whiteSpace: "pre-wrap" }}>{announcement?.content}</p>
       </Modal>
     </ConfigProvider>
   )
