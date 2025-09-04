@@ -283,22 +283,23 @@ export default function WorkloadReviewPage({ params }: { params: Promise<{ id: s
           <CardContent className="space-y-6">
             <div className="space-y-2.5">
               <Label className="text-sm font-medium text-gray-500">审核结果</Label>
-              <Select value={reviewStatus} onValueChange={setReviewStatus}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="请选择审核结果" />
-                </SelectTrigger>
-                <SelectContent>
-                  {reviewOptions.map(option => (
-                    <SelectItem 
-                      key={option.value} 
-                      value={option.value}
-                      className="cursor-pointer hover:bg-gray-100"
+              <div className="flex gap-2">
+                {reviewOptions.map(option => {
+                  const isActive = reviewStatus === option.value
+                  return (
+                    <Button
+                      key={option.value}
+                      onClick={() => setReviewStatus(option.value)}
+                      variant={isActive ? "default" : "outline"}
+                      className={`px-4 py-2 ${
+                        isActive ? "ring-2 ring-offset-2 ring-red-500" : ""
+                      }`}
                     >
                       {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </Button>
+                  )
+                })}
+              </div>
             </div>
 
             <div className="space-y-2.5">
