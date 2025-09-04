@@ -266,50 +266,14 @@ export default function WorkloadEditPage({
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                   <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-500">工作量名称</FormLabel>
-                        <FormControl>
-                          <Input placeholder="请输入工作量名称" className="h-10" {...field} />
-                        </FormControl>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="content"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-500">工作内容</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="请输入工作内容"
-                            className="min-h-[120px] resize-none"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage className="empty:hidden" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <FormField
                       control={form.control}
                       name="source"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-gray-500">工作量来源</FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
+                          <FormLabel className="text-base">工作量来源</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="h-10">
+                              <SelectTrigger className="h-11">
                                 <SelectValue placeholder="请选择工作量来源" />
                               </SelectTrigger>
                             </FormControl>
@@ -329,7 +293,38 @@ export default function WorkloadEditPage({
                         </FormItem>
                       )}
                     />
+                  <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base">工作量名称</FormLabel>
+                            <FormControl>
+                                <Input placeholder="请输入工作量名称" className="h-11" {...field} />
+                            </FormControl>
+                            <FormMessage className="empty:hidden" />
+                        </FormItem>
+                      )}
+                  />
+                <FormField
+                  control={form.control}
+                  name="content"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">工作内容</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="请输入工作内容"
+                          className="min-h-[120px] resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage className="empty:hidden" />
+                    </FormItem>
+                  )}
+                />
 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
                       name="type"
