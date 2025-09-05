@@ -98,6 +98,22 @@ export default function WorkloadEditPage({
     resolver: zodResolver(workloadFormSchema),
     defaultValues: defaultFormValues,
   })
+    // 监听 source 变化，如果切换到大创则自动设置 shares
+    const sourceValue = form.watch("source");
+
+    useEffect(() => {
+      if (sourceValue === "innovation" && authUser) {
+        const currentShares = form.getValues("shares");
+        if (!currentShares || currentShares.length === 0) {
+          const submitterShare = {
+            user: authUser.id,
+            percentage: 100,
+          };
+          form.setValue("shares", [submitterShare]);
+        }
+      }
+    }, [sourceValue, authUser, form]);
+
 
   // 获取工作量详情
   useEffect(() => {
@@ -414,7 +430,15 @@ export default function WorkloadEditPage({
                                       filterOption={(input, option) =>
                                         (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
                                       }
-                                      options={allUsers.map((user) => ({
+                                      options={allUsers
+                                        .filter((user) => {
+                                          // 过滤掉已经选择的用户（排除自己和当前行）
+                                          const isAlreadySelected = field.value.some(
+                                            (s, i) => s.user === user.id && i !== index
+                                          );
+                                          return !isAlreadySelected;
+                                        })
+                                        .map((user) => ({
                                         label: user.username,
                                         value: user.id,
                                       }))}
