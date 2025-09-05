@@ -195,12 +195,15 @@ class WorkloadSerializer(serializers.ModelSerializer):
             directory = os.path.dirname(instance.attachments.path)
             os.makedirs(directory, exist_ok=True)
 
-        # 更新大创占比
-        if shares_data is not None:
+        # 更新 shares（只负责写，不负责清理）
+        if instance.source == 'innovation' and shares_data is not None:
             # 先删除原来的
             instance.shares.all().delete()
             for s in shares_data:
                 WorkloadShare.objects.create(workload=instance, user=s['user'], percentage=s['percentage'])
+
+        # 这里不再写清理逻辑，因为 save() 已经兜底处理了
+        instance.save()
 
         return instance
 

@@ -171,6 +171,16 @@ class Workload(models.Model):
 
     @transaction.atomic
     def save(self, *args, **kwargs):
+        # 清理与 source 无关的字段
+        if self.source != 'innovation':
+            self.innovation_stage = None
+            # 删除所有 shares
+            if self.pk:  # 仅当已存在时删除
+                self.shares.all().delete()
+
+        if self.source != 'assistant':
+            self.assistant_salary_paid = None
+
         # 如果是新创建的记录，确保ID不使用固定值，而是自动生成
         if self.pk and not Workload.objects.filter(pk=self.pk).exists():
             # 如果指定了ID但不存在，清除ID让数据库自动生成
