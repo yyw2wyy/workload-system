@@ -36,14 +36,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return Project.objects.filter(submitter=user)
 
         # 否则根据角色返回可访问的项目
-        if user.role == 'student':
-            # 学生只能看到自己提交的项目
-            return Project.objects.filter(submitter=user)
-        elif user.role == 'mentor':
-            # 导师可以看到：1.自己提交的项目 2.自己需要审核的学生项目
+        if user.role == 'student' or user.role =='mentor':
+            # 学生和导师可以看到：1.自己提交的项目 2.已审核通过的项目
             return Project.objects.filter(
                 Q(submitter=user) |  # 自己提交的
-                Q(mentor_reviewer=user, submitter__role='student')  # 需要审核的学生项目
+                Q(review_status='approved')  # 已通过审核的项目
             )
         elif user.role == 'teacher':
             # 教师可以看到所有项目
