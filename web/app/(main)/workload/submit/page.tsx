@@ -155,7 +155,8 @@ export default function WorkloadSubmitPage() {
     const fetchProjects = async () => {
       try {
         const response = await api.get("/project/")
-        setProjects(response.data) // 这里后端返回的需要是 [{id, name}]
+        const filtered = response.data.filter((p: Project) => p.review_status === "approved");
+        setProjects(filtered) // 这里后端返回的需要是 [{id, name}]
       } catch (err) {
         toast.error("获取项目列表失败", { duration: 3000 })
       }

@@ -45,6 +45,7 @@ import {
     defaultFormValues,
 } from "@/lib/types/workload"
 import { useAuthStore } from "@/lib/store/auth"
+import {Project} from "@/lib/types/project";
 
 type Reviewer = { id: number; username: string; role: string }
 
@@ -113,6 +114,23 @@ export default function WorkloadEditPage({
         }
       }
     }, [sourceValue, authUser, form]);
+
+    // 在 WorkloadEditPage 里增加
+    const [projects, setProjects] = useState<Project[]>([])
+
+    // 获取项目列表
+    useEffect(() => {
+      const fetchProjects = async () => {
+        try {
+          const response = await api.get("/project/")
+          const filtered = response.data.filter((p: Project) => p.review_status === "approved")
+          setProjects(filtered) // [{id, name}]
+        } catch (err) {
+          toast.error("获取项目列表失败", { duration: 3000 })
+        }
+      }
+      fetchProjects()
+    }, [])
 
 
   // 获取工作量详情
@@ -201,6 +219,9 @@ export default function WorkloadEditPage({
       // 添加文件（如果有）
       if (values.attachments) {
         formData.append("attachments", values.attachments)
+      }
+      if (["innovation", "horizontal", "documentation"].includes(values.source)) {
+          formData.append("project_id", String(values.project_id))
       }
 
       await api.put(`/workload/${resolvedParams.id}/`, formData, {
@@ -309,19 +330,51 @@ export default function WorkloadEditPage({
                         </FormItem>
                       )}
                     />
-                  <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-base">工作量名称</FormLabel>
+                    {["innovation", "horizontal", "documentation"].includes(form.watch("source")) ? (
+                      <FormField
+                        control={form.control}
+                        name="project_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base">关联项目</FormLabel>
                             <FormControl>
-                                <Input placeholder="请输入工作量名称" className="h-11" {...field} />
+                              <AntdSelect
+                                {...field}
+                                style={{ width: "100%", height: 44 }}
+                                placeholder="请选择关联项目"
+                                options={projects.map((p) => ({
+                                  label: p.name,
+                                  value: p.id,
+                                }))}
+                                onChange={(value) => {
+                                  field.onChange(value)
+                                  const selected = projects.find((p) => p.id === value)
+                                  if (selected) {
+                                    form.setValue("name", selected.name)  // 自动同步工作量名称
+                                  }
+                                }}
+                                value={field.value || workload?.project?.id} // 编辑时默认选中原项目
+                              />
                             </FormControl>
                             <FormMessage className="empty:hidden" />
-                        </FormItem>
-                      )}
-                  />
+                          </FormItem>
+                        )}
+                      />
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base">工作量名称</FormLabel>
+                              <FormControl>
+                                <Input placeholder="请输入工作量名称" className="h-11" {...field} />
+                              </FormControl>
+                              <FormMessage className="empty:hidden" />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                 <FormField
                   control={form.control}
                   name="content"

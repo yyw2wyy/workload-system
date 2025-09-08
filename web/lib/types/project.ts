@@ -21,12 +21,14 @@ export const statusOptions = [
 
 // 类型定义
 export type ProjectStatus = keyof typeof projectStatusMap
+export type ReviewStatus = keyof typeof reviewStatusMap
 
 export interface Project {
   id: number
   name: string
-  status: ProjectStatus
   start_time: string
+  project_status: ProjectStatus
+  review_status: ReviewStatus
   created_at: string
   teacher_reviewer: {
     id: number
