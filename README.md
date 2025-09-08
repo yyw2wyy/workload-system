@@ -216,14 +216,12 @@ web/
 3. 执行数据库迁移
 
    ```
-   # 删除所有app中的迁移文件
-   del workload\migrations\0*.py
-   del user\migrations\0*.py
-   del announcement\migrations\0*.py
    # 创建新的迁移
+   python manage.py makemigrations
+   # 执行数据库迁移
    python manage.py migrate
    ```
-
+   
 4. 创建超级用户
 
    ```
@@ -353,11 +351,9 @@ npx next start -p 3333
 
    ```
    docker compose exec api bash
-   # 删除所有app中的迁移文件
-   del workload\migrations\0*.py
-   del user\migrations\0*.py
-   del announcement\migrations\0*.py
    # 创建新的迁移
+   python manage.py makemigrations
+   # 执行数据库迁移
    python manage.py migrate
    # 创建管理员用户
    python manage.py createsuperuser
@@ -367,7 +363,7 @@ npx next start -p 3333
    
    exit
    ```
-
+   
 5. 收集静态文件（好像不需要）
 
    ```
@@ -438,6 +434,9 @@ npx next start -p 3333
 
    ```
    docker-compose exec api bash
+   # 使用自定义的迁移命令应用数据库迁移
+   python manage.py migrate_with_backup
+   or 
    # 应用数据库迁移
    python manage.py migrate
    ```
@@ -449,6 +448,7 @@ npx next start -p 3333
 每次备份后，文件记得上传git。
 
 - 备份：`python backup_db.py backup`
+- 迁移时自动进行备份：`python manage.py migrate_with_backup`
 - 恢复：`python backup_db.py restore db_backups/你的备份文件.sql`
 - 查看备份列表：`python backup_db.py list`
 
@@ -498,7 +498,7 @@ npx next start -p 3333
 ## 运行端口
 
 首先本项目不通过环境变量来设置前后端运行端口，而是通过启动命令来确定前后端运行端口，环境变量只是为了前后端的正常通信。
-下面以前端在8888端口，后端在3333端口运行为例。
+下面以后端在8888端口，前端在3333端口运行为例。
 
 ### 源码启动
 

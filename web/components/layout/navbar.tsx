@@ -38,6 +38,21 @@ const navigation = [
     ],
     roles: ["mentor", "teacher"], // 只对导师和教师显示
   },
+  {
+    name: "项目申报",
+    items: [
+      { name: "申报项目", href: "/project/declare" },
+      { name: "已申报项目", href: "/project/declared"}
+    ],
+  },
+  {
+    name: "项目审核",
+    items: [
+      { name: "审核项目", href: "/project/review" },
+      { name: "已审核项目", href: "/project/review/history"}
+    ],
+    roles: ["teacher"]
+  },
 ]
 
 export function Navbar() {
