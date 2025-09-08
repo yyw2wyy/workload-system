@@ -3,6 +3,8 @@ from django.utils.html import format_html
 from .models import Workload,WorkloadShare
 from django.forms.models import BaseInlineFormSet
 from django.core.exceptions import ValidationError
+from django import forms
+from project.models import Project
 
 class WorkloadShareFormSet(BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
@@ -33,6 +35,17 @@ class WorkloadShareFormSet(BaseInlineFormSet):
         # 如果大创存在参与者，检查总和
         if self.instance.source == 'innovation' and total_percentage != 100:
             raise ValidationError('所有参与者的占比总和必须为100%')
+
+# 自定义表单，限制 project 选择范围
+class WorkloadForm(forms.ModelForm):
+    class Meta:
+        model = Workload
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 只显示教师已审核的项目
+        self.fields['project'].queryset = Project.objects.filter(review_status='approved')
 
 
 class WorkloadShareInline(admin.TabularInline):
@@ -108,6 +121,13 @@ class WorkloadAdmin(admin.ModelAdmin):
             self.inlines = [WorkloadShareInline]
         else:
             self.inlines = []
+
+        # 如果来源是大创/横向/材料撰写，插入 project 字段
+        if obj and obj.source in ['innovation', 'horizontal', 'documentation']:
+            base_fields = list(fieldsets[0][1]['fields'])
+            if 'project' not in base_fields:
+                base_fields.insert(3, 'project')  # 放在 source 后面
+            fieldsets[0][1]['fields'] = tuple(base_fields)
 
         # 动态插入助教工资字段
         if obj and obj.source == 'assistant':

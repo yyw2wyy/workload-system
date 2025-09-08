@@ -6,6 +6,7 @@ import os
 import logging
 from datetime import timedelta,date
 import json
+from project.models import Project
 
 User = get_user_model()
 
@@ -14,6 +15,12 @@ class UserSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'role']
+
+class ProjectSimpleSerializer(serializers.ModelSerializer):
+    """简化版项目序列化器"""
+    class Meta:
+        model = Project
+        fields = ['id', 'name']
 
 class WorkloadShareSerializer(serializers.ModelSerializer):
     """大创工作量参与人及占比"""
@@ -39,6 +46,14 @@ class WorkloadSerializer(serializers.ModelSerializer):
     # 新增字段：大创参与人及占比
     shares = WorkloadShareSerializer(many=True, required=False)
 
+    project = ProjectSimpleSerializer(read_only=True)
+    project_id = serializers.PrimaryKeyRelatedField(
+        queryset=Project.objects.all(),
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+
     class Meta:
         model = Workload
         fields = [
@@ -49,7 +64,7 @@ class WorkloadSerializer(serializers.ModelSerializer):
             'mentor_reviewer', 'mentor_reviewer_id', 'mentor_comment', 'mentor_review_time',
             'teacher_reviewer', 'teacher_comment', 'teacher_review_time',
             'status', 'created_at', 'updated_at',
-            'shares'
+            'shares', 'project', 'project_id'
         ]
         read_only_fields = [
             'status', 'mentor_comment', 'teacher_comment',
@@ -137,6 +152,23 @@ class WorkloadSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 "assistant_salary_paid": "助教类工作量必须填写已发助教工资"
             })
+
+        # 大创/横向/材料撰写必须关联已审核通过的项目
+        project = data.get('project_id') or getattr(self.instance, 'project', None)
+
+        if source in ['innovation', 'horizontal', 'documentation']:
+            if not project:
+                raise serializers.ValidationError({
+                    "project": "大创/横向/材料撰写的工作量必须选择一个已审核通过的项目"
+                })
+            if project.review_status != 'approved':  # 假设 Project 有 status 字段，且教师审核通过标记为 approved
+                raise serializers.ValidationError({
+                    "project": "关联的项目必须是教师已审核通过的项目"
+                })
+
+        # 把验证过的 project_id 写入 project 字段，保证 create/update 正常
+        if 'project_id' in data:
+            data['project'] = data.pop('project_id')
 
         return data
 

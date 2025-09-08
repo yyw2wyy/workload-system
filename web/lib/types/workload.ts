@@ -82,6 +82,12 @@ export type WorkloadShare = {
   percentage: number
 }
 
+// 项目简化类型
+export type ProjectSimple = {
+  id: number
+  name: string
+}
+
 // 类型定义
 export type WorkloadSource = keyof typeof sourceMap
 export type InnovationStage = keyof typeof innovationStageMap
@@ -129,6 +135,8 @@ export type Workload = {
   created_at: string
   updated_at: string
   shares?: WorkloadShare[]
+  project?: ProjectSimple | null
+  project_id?: number | null
 }
 
 // 表单验证模式
@@ -163,6 +171,7 @@ export const workloadFormSchema = z.object({
       })
     )
    .default([]),
+  project_id: z.number().nullable().optional(),
 }).refine((data) => {
   if (!data.startDate || !data.endDate) return true
   return data.endDate >= data.startDate
@@ -199,6 +208,12 @@ export const workloadFormSchema = z.object({
 }, {
   message: "大创类工作量的占比总和必须为100",
   path: ["shares"],
+}).refine((data) => {
+  if (["horizontal", "innovation", "documentation"].includes(data.source)) return !!data.project_id
+  return true
+}, {
+  message: "请选择关联项目",
+  path: ["project_id"],
 })
 
 // 表单类型定义
@@ -216,4 +231,5 @@ export const defaultFormValues: Partial<WorkloadFormValues> = {
   assistantSalaryPaid: "",
   mentor_reviewer: "",
   shares: [],
+  project_id: null,
 } 

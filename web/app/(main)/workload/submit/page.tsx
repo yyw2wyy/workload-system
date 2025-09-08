@@ -44,6 +44,7 @@ import {
 } from "@/lib/types/workload"
 import {useAuthStore} from "@/lib/store/auth";
 import type { Announcement } from "@/lib/types/announcement"
+import {Project} from "@/lib/types/project";
 
 type Reviewer = {
   id: number
@@ -147,6 +148,21 @@ export default function WorkloadSubmitPage() {
     }
   }, [sourceValue, authUser, form]);
 
+  const [projects, setProjects] = useState<Project[]>([])
+    // 获取项目列表
+  useEffect(() => {
+    if (!isStudent) return
+    const fetchProjects = async () => {
+      try {
+        const response = await api.get("/project/")
+        setProjects(response.data) // 这里后端返回的需要是 [{id, name}]
+      } catch (err) {
+        toast.error("获取项目列表失败", { duration: 3000 })
+      }
+    }
+    fetchProjects()
+  }, [isStudent])
+
   // 处理文件选择
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -217,6 +233,11 @@ export default function WorkloadSubmitPage() {
       // 只有学生才需要提供审核导师
       if (isStudent && data.mentor_reviewer) {
         formData.append("mentor_reviewer_id", data.mentor_reviewer);
+      }
+
+      if (["innovation", "horizontal", "documentation"].includes(data.source)) {
+        // 提交 project_id
+        formData.append("project_id", String(data.project_id))
       }
 
       // 添加文件（如果有）
@@ -367,23 +388,55 @@ export default function WorkloadSubmitPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-base">工作量名称</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="请输入工作量名称" 
-                          {...field} 
-                          className="h-11"
-                        />
-                      </FormControl>
-                      <FormMessage className="empty:hidden" />
-                    </FormItem>
-                  )}
-                />
+                {/* 动态渲染：来源为项目型时 → 选择项目 */}
+                {["innovation", "horizontal", "documentation"].includes(sourceValue) ? (
+                  <FormField
+                    control={form.control}
+                    name="project_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">关联项目</FormLabel>
+                        <FormControl>
+                          <AntdSelect
+                            {...field}
+                            style={{ width: "100%", height: 44 }}
+                            placeholder="请选择关联项目"
+                            options={projects.map((p) => ({
+                              label: p.name,
+                              value: p.id,
+                            }))}
+                            onChange={(value) => {
+                              field.onChange(value)
+                              const selected = projects.find((p) => p.id === value)
+                              if (selected) {
+                                form.setValue("name", selected.name)  // ⚡ 自动同步项目名称
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">工作量名称</FormLabel>
+                        <FormControl>
+                          <Input
+                              placeholder="请输入工作量名称"
+                                 {...field}
+                                 className="h-11"
+                          />
+                        </FormControl>
+                        <FormMessage className="empty:hidden" />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <FormField
                   control={form.control}
                   name="content"
@@ -556,8 +609,8 @@ export default function WorkloadSubmitPage() {
                           </FormControl>
                           <SelectContent>
                             {typeOptions.map((option) => (
-                              <SelectItem 
-                                key={option.value} 
+                              <SelectItem
+                                key={option.value}
                                 value={option.value}
                                 className="cursor-pointer hover:bg-gray-100"
                               >
@@ -636,8 +689,8 @@ export default function WorkloadSubmitPage() {
                           </FormControl>
                           <SelectContent>
                             {intensityTypeOptions.map((option) => (
-                              <SelectItem 
-                                key={option.value} 
+                              <SelectItem
+                                key={option.value}
                                 value={option.value}
                                 className="cursor-pointer hover:bg-gray-100"
                               >
@@ -657,11 +710,11 @@ export default function WorkloadSubmitPage() {
                       <FormItem>
                         <FormLabel className="text-base">工作强度值</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="请输入工作强度值" 
+                          <Input
+                            type="number"
+                            placeholder="请输入工作强度值"
                             className="h-11"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage className="empty:hidden" />
@@ -723,8 +776,8 @@ export default function WorkloadSubmitPage() {
                           </FormControl>
                           <SelectContent>
                             {reviewers.map((reviewer) => (
-                              <SelectItem 
-                                key={reviewer.id} 
+                              <SelectItem
+                                key={reviewer.id}
                                 value={reviewer.id.toString()}
                                 className="cursor-pointer hover:bg-gray-100"
                               >
@@ -767,4 +820,4 @@ export default function WorkloadSubmitPage() {
       </Modal>
     </ConfigProvider>
   )
-} 
+}

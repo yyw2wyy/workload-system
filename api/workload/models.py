@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 import os
 from datetime import date, timedelta
+from project.models import Project
 
 User = get_user_model()
 
@@ -61,6 +62,14 @@ class Workload(models.Model):
     work_type = models.CharField('工作类型', max_length=20, choices=TYPE_CHOICES)
     start_date = models.DateField('开始日期')
     end_date = models.DateField('结束日期')
+
+    # 新增字段：可选项目
+    project = models.ForeignKey(
+        Project,
+        verbose_name='关联项目',
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
     
     # 工作强度
     intensity_type = models.CharField('工作强度类型', max_length=20, choices=INTENSITY_TYPE_CHOICES)
@@ -169,6 +178,12 @@ class Workload(models.Model):
         if self.teacher_reviewer and self.teacher_reviewer.role != 'teacher':
             raise ValidationError('教师审核人必须是教师角色')
 
+        if self.source in ['innovation', 'horizontal', 'documentation']:
+            if not self.project:
+                raise ValidationError('该工作来源必须选择一个已审核项目')
+            if self.project.review_status != 'approved':
+                raise ValidationError('只能选择教师已审核的项目')
+
     @transaction.atomic
     def save(self, *args, **kwargs):
         # 清理与 source 无关的字段
@@ -180,6 +195,9 @@ class Workload(models.Model):
 
         if self.source != 'assistant':
             self.assistant_salary_paid = None
+
+        if self.source not in ['innovation', 'horizontal', 'documentation']:
+            self.project = None
 
         # 如果是新创建的记录，确保ID不使用固定值，而是自动生成
         if self.pk and not Workload.objects.filter(pk=self.pk).exists():
