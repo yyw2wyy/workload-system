@@ -122,7 +122,7 @@ export default function WorkloadEditPage({
     useEffect(() => {
       const fetchProjects = async () => {
         try {
-          const response = await api.get("/project/")
+          const response = await api.get("/project/approved_review/")
           const filtered = response.data.filter((p: Project) => p.review_status === "approved")
           setProjects(filtered) // [{id, name}]
         } catch (err) {

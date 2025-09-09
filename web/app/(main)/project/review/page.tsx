@@ -58,7 +58,6 @@ export default function ProjectReviewPage() {
         
         console.log("获取待审核项目列表成功:", response.data)
         const projectData = Array.isArray(response.data) ? response.data : []
-        console.log(projectData[0].created_time)
         setProjects(projectData)
         setFilteredProjects(projectData)
 

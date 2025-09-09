@@ -154,7 +154,7 @@ export default function WorkloadSubmitPage() {
     if (!isStudent) return
     const fetchProjects = async () => {
       try {
-        const response = await api.get("/project/")
+        const response = await api.get("/project/approved_review/")
         const filtered = response.data.filter((p: Project) => p.review_status === "approved");
         setProjects(filtered) // 这里后端返回的需要是 [{id, name}]
       } catch (err) {
