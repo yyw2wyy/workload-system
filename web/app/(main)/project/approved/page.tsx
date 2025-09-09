@@ -164,8 +164,8 @@ export default function ProjectReviewHistoryPage() {
                   <TableHead className="font-semibold">开始日期</TableHead>
                   <TableHead className="font-semibold">提交人</TableHead>
                   <TableHead className="font-semibold">提交时间</TableHead>
-                  <TableHead className="font-semibold">状态</TableHead>
-                  <TableHead className="text-center font-semibold">操作</TableHead>
+                  <TableHead className="font-semibold">审核状态</TableHead>
+                  {/*<TableHead className="text-center font-semibold">操作</TableHead>*/}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -207,16 +207,16 @@ export default function ProjectReviewHistoryPage() {
                       </TableCell>
 
 
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => router.push(`/project/detail/${project.id}?returnUrl=/project/review/history`)}
-                          className="h-8 px-3 hover:bg-gray-100"
-                        >
-                          查看详情
-                        </Button>
-                      </TableCell>
+                      {/*<TableCell className="text-right">*/}
+                      {/*  <Button*/}
+                      {/*    variant="outline"*/}
+                      {/*    size="sm"*/}
+                      {/*    onClick={() => router.push(`/project/detail/${project.id}?returnUrl=/project/review/history`)}*/}
+                      {/*    className="h-8 px-3 hover:bg-gray-100"*/}
+                      {/*  >*/}
+                      {/*    查看详情*/}
+                      {/*  </Button>*/}
+                      {/*</TableCell>*/}
                     </TableRow>
                   ))
                 )}
