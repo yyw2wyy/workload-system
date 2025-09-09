@@ -107,9 +107,9 @@ export default function ProjectReviewHistoryPage() {
         <Card className="p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div className="space-y-1">
-              <h3 className="text-2xl font-semibold tracking-tight">历史审核记录</h3>
+              <h3 className="text-2xl font-semibold tracking-tight">已有项目</h3>
               <p className="text-sm text-muted-foreground">
-                查看已审核的项目记录
+                查看已有项目列表
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">

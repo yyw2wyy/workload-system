@@ -151,7 +151,6 @@ export default function WorkloadSubmitPage() {
   const [projects, setProjects] = useState<Project[]>([])
     // 获取项目列表
   useEffect(() => {
-    if (!isStudent) return
     const fetchProjects = async () => {
       try {
         const response = await api.get("/project/approved_review/")
