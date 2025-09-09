@@ -36,15 +36,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return Project.objects.filter(submitter=user)
 
         # 否则根据角色返回可访问的项目
-        if user.role == 'student' or user.role =='mentor':
-            # 学生和导师可以看到：1.自己提交的项目 2.已审核通过的项目
-            return Project.objects.filter(
-                Q(submitter=user) |  # 自己提交的
-                Q(review_status='approved')  # 已通过审核的项目
-            )
-        elif user.role == 'teacher':
+        if user.role == 'teacher':
             # 教师可以看到所有项目
             return Project.objects.all()
+        else:
+            # 其他人只能看到自己提交的项目
+            return Project.objects.filter(submitter=user)
         return Project.objects.none()
 
     def create(self, request, *args, **kwargs):
@@ -121,7 +118,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
             # 检查项目当前状态
             if user.role != 'teacher':  # 只对非教师角色进行状态检查
-                if instance.status not in ['pending', 'teacher_rejected']:
+                if instance.review_status not in ['pending', 'rejected']:
                     return Response(
                         {"detail": "只能修改未审核或审核未通过的项目"},
                         status=status.HTTP_403_FORBIDDEN
@@ -132,7 +129,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
 
             # 如果是被驳回的项目，修改后重置状态为待审核
-            if user.role != 'teacher' and instance.status == 'rejected':
+            if user.role != 'teacher' and instance.review_status == 'rejected':
                 serializer.save(status='pending')
             else:
                 serializer.save()
@@ -159,41 +156,65 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         """删除项目时进行权限检查"""
-        if instance.status not in ['pending', 'rejected']:
+        if instance.review_status not in ['pending', 'rejected']:
             return Response(
                 {"detail": "只能删除未审核或审核未通过的项目"},
                 status=status.HTTP_403_FORBIDDEN
             )
         instance.delete()
 
+    # 获取每个人自身申报的项目
+    @action(detail=False, methods=['get'])
+    def getDeclaredById(self, request):
+        user = self.request.user
+
+        queryset = Project.objects.filter(
+            Q(submitter_id=user.id)  # 提交的待审核项目
+        )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['get'])
     def pending_review(self, request):
         """获取待审核的项目列表"""
-        user = request.user
-        print(request)
-        print(user)
-        if user.role == 'teacher':
-            # 教师获取所有需要审核的项目
-            queryset = Project.objects.filter(
-                Q(status='approved') |  # 导师已审核通过的项目
-                Q(status='pending')  # 提交的待审核项目
-            )
-        else:
-            return Response(
-                {"detail": "只有教师可以查看待审核项目"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+
+        queryset = Project.objects.filter(
+            Q(review_status="pending")  # 提交的待审核项目
+        )
 
         serializer = self.get_serializer(queryset, many=True)
-        print(serializer.data)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def approved_review(self, request):
         """获取审核成功的项目列表"""
         queryset = Project.objects.filter(
-            Q(status='approved')
+            Q(review_status='approved')
         )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def reviewed(self, request):
+        """获取已审核的项目列表"""
+        # user = request.user
+        # if user.role == 'teacher':
+        #     # 教师获取已审核的
+        #     queryset = Project.objects.filter(
+        #         teacher_reviewer=user)
+        # else:
+        #     return Response(
+        #         {"detail": "只有教师可以查看已审核项目列表"},
+        #         status=status.HTTP_403_FORBIDDEN
+        #     )
+
+        queryset = Project.objects.filter(
+            Q(review_status='approved') |
+            Q(review_status='rejected')
+        )
+
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

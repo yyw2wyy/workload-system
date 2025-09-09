@@ -65,7 +65,7 @@ export default function ProjectsubmittedPage() {
 
   const fetchProjects = async () => {
     try {
-      const response = await api.get("/project/", {
+      const response = await api.get("/project/getDeclaredById", {
         params: {
           submitted: true
         }

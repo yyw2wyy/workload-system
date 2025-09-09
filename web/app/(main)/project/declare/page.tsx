@@ -65,8 +65,6 @@ export default function WorkloadDeclarePage() {
   const [fileList, setFileList] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // 默认审核教师
-  const teacher_reviewer = "梁红茹"
 
   // 从本地存储获取用户角色
   useEffect(() => {
@@ -77,30 +75,21 @@ export default function WorkloadDeclarePage() {
 
   async function onSubmit(data: ProjectFormValues) {
     try {
+      console.log("准备提交")
       setIsSubmitting(true);
 
       // 准备表单数据
       const formData = new FormData();
       formData.append("name", data.name);
-      formData.append("project_status", data.status);
-      formData.append("start_date", format(data.startDate, "yyyy-MM-dd"));
+      formData.append("project_status", data.project_status);
+      formData.append("start_date", format(data.start_date, "yyyy-MM-dd"));
 
-      // 只有学生才需要提供审核导师
-      if (isStudent) {
-        formData.append("teacher_reviewer", teacher_reviewer);
-      }
 
       // 老师不需要审核
       if (isTeacher) {
         formData.append("review_status", "approved")
       }
 
-      // 输出FormData内容以供调试
-      console.log("提交的数据：", {
-        name: data.name,
-        status: data.status,
-        start_date: format(data.startDate, "yyyy-MM-dd"),
-      });
 
       // 调用后端 API
       const response = await api.post("/project/", formData, {
@@ -220,11 +209,10 @@ export default function WorkloadDeclarePage() {
                     </FormItem>
                   )}
                 />
-
                 <div className="grid grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name="status"
+                    name="project_status"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-base">项目状态</FormLabel>
@@ -251,11 +239,10 @@ export default function WorkloadDeclarePage() {
                     )}
                   />
                 </div>
-
                 <div className="grid grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name="startDate"
+                    name="start_date"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel className="text-base">开始日期</FormLabel>
@@ -278,7 +265,6 @@ export default function WorkloadDeclarePage() {
                     )}
                   />
                 </div>
-
                 <div className="flex justify-end space-x-4">
                   <Button
                     type="submit"

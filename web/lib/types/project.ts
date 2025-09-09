@@ -19,6 +19,11 @@ export const statusOptions = [
   { value: "in_research", label: "在研" },
 ] as const
 
+export const reviewOptions = [
+  { value: "approved", label: "通过" },
+  { value: "rejected", label: "拒绝" },
+] as const
+
 // 类型定义
 export type ProjectStatus = keyof typeof projectStatusMap
 export type ReviewStatus = keyof typeof reviewStatusMap
@@ -26,24 +31,32 @@ export type ReviewStatus = keyof typeof reviewStatusMap
 export interface Project {
   id: number
   name: string
-  start_time: string
+  start_date: string
   project_status: ProjectStatus
   review_status: ReviewStatus
   created_at: string
+  updated_at: string
+  teacher_comment: string
+  teacher_review_time: string
   teacher_reviewer: {
     id: number
     username: string
     role: string
-  } | null
+  } | null,
+  submitter: {
+    id: number
+    username: string
+    role: string
+  }
 }
 
 // 表单验证模式
 export const projectFormSchema = z.object({
   name: z.string().min(1, "请输入项目名称"),
-  status: z.enum(Object.keys(projectStatusMap) as [ProjectStatus, ...ProjectStatus[]], {
+  project_status: z.enum(Object.keys(projectStatusMap) as [ProjectStatus, ...ProjectStatus[]], {
     required_error: "请选择项目状态",
   }),
-  startDate: z.date({
+  start_date: z.date({
     required_error: "请选择项目开始日期",
   }),
   teacher_reviewer: z.string().optional(),
@@ -55,6 +68,6 @@ export type ProjectFormValues = z.infer<typeof projectFormSchema>
 // 表单默认值
 export const defaultFormValues: Partial<ProjectFormValues> = {
   name: "",
-  status: "" as ProjectStatus,
+  project_status: "" as ProjectStatus,
   teacher_reviewer: "梁红茹"
 }

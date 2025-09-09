@@ -23,43 +23,15 @@ import {
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { useAuthStore } from "@/lib/store/auth"
-import { sourceMap, typeMap, statusMap } from "@/lib/types/workload"
+import {
+  projectStatusMap, reviewStatusMap, Project
+} from "@/lib/types/project"
 
-// 工作量类型定义
-type Workload = {
-  id: number
-  name: string
-  content: string
-  source: keyof typeof sourceMap
-  work_type: keyof typeof typeMap
-  start_date: string
-  end_date: string
-  intensity_type: string
-  intensity_value: number
-  submitter: {
-    id: number
-    username: string
-    role: string
-  }
-  mentor_reviewer: {
-    id: number
-    username: string
-    role: string
-  } | null
-  teacher_reviewer: {
-    id: number
-    username: string
-    role: string
-  } | null
-  status: keyof typeof statusMap
-  created_at: string
-}
-
-export default function WorkloadReviewPage() {
+export default function ProjectReviewPage() {
   const router = useRouter()
   const { user } = useAuthStore()
-  const [workloads, setWorkloads] = useState<Workload[]>([])
-  const [filteredWorkloads, setFilteredWorkloads] = useState<Workload[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [submitters, setSubmitters] = useState<{ id: number; username: string }[]>([])
   const [selectedSubmitter, setSelectedSubmitter] = useState<string | undefined>(undefined)
@@ -68,15 +40,15 @@ export default function WorkloadReviewPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  // 获取待审核工作量列表
+  // 获取待审核项目列表
   useEffect(() => {
-    const fetchWorkloads = async () => {
+    const fetchProjects = async () => {
       try {
         setIsLoading(true)
-        console.log("开始获取待审核工作量列表...")
+        console.log("开始获取待审核项目列表...")
         console.log("当前用户角色:", user?.role)
         
-        const response = await api.get("/workload/pending_review/", {
+        const response = await api.get("/project/pending_review/", {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -84,20 +56,21 @@ export default function WorkloadReviewPage() {
           withCredentials: true
         })
         
-        console.log("获取待审核工作量列表成功:", response.data)
-        const workloadData = Array.isArray(response.data) ? response.data : []
-        setWorkloads(workloadData)
-        setFilteredWorkloads(workloadData)
+        console.log("获取待审核项目列表成功:", response.data)
+        const projectData = Array.isArray(response.data) ? response.data : []
+        console.log(projectData[0].created_time)
+        setProjects(projectData)
+        setFilteredProjects(projectData)
 
         // 提取所有不重复的提交人
         const uniqueSubmitters = Array.from(
           new Map(
-            workloadData.map(w => [w.submitter.id, w.submitter])
+            projectData.map(w => [w.submitter.id, w.submitter])
           ).values()
         )
         setSubmitters(uniqueSubmitters)
       } catch (error: any) {
-        console.error("获取待审核工作量列表失败:", error)
+        console.error("获取待审核项目列表失败:", error)
         
         // 详细记录错误信息
         const errorDetails = {
@@ -129,7 +102,7 @@ export default function WorkloadReviewPage() {
           errorMessage = "服务器内部错误，请联系管理员"
         }
 
-        toast.error("获取待审核工作量列表失败", {
+        toast.error("获取待审核项目列表失败", {
           description: errorMessage,
           duration: 5000,
         })
@@ -140,11 +113,11 @@ export default function WorkloadReviewPage() {
 
     // 只有当用户是导师或教师时才获取待审核列表
     if (user && (user.role === "mentor" || user.role === "teacher")) {
-      fetchWorkloads()
+      fetchProjects()
       
       // 设置自动刷新定时器，每30秒刷新一次
       const refreshInterval = setInterval(() => {
-        fetchWorkloads()
+        fetchProjects()
       }, 30000) // 30秒
 
       // 组件卸载时清除定时器
@@ -158,9 +131,9 @@ export default function WorkloadReviewPage() {
   // 添加手动刷新功能
   const handleRefresh = () => {
     setIsLoading(true)
-    const fetchWorkloads = async () => {
+    const fetchProjects = async () => {
       try {
-        const response = await api.get("/workload/pending_review/", {
+        const response = await api.get("/project/pending_review/", {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -168,20 +141,20 @@ export default function WorkloadReviewPage() {
           withCredentials: true
         })
         
-        const workloadData = Array.isArray(response.data) ? response.data : []
-        setWorkloads(workloadData)
-        setFilteredWorkloads(workloadData)
+        const projectData = Array.isArray(response.data) ? response.data : []
+        setProjects(projectData)
+        setFilteredProjects(projectData)
 
         // 提取所有不重复的提交人
         const uniqueSubmitters = Array.from(
           new Map(
-            workloadData.map(w => [w.submitter.id, w.submitter])
+            projectData.map(w => [w.submitter.id, w.submitter])
           ).values()
         )
         setSubmitters(uniqueSubmitters)
       } catch (error: any) {
-        console.error("获取待审核工作量列表失败:", error)
-        toast.error("获取待审核工作量列表失败", {
+        console.error("获取待审核项目列表失败:", error)
+        toast.error("获取待审核项目列表失败", {
           description: error.response?.data?.detail || "请稍后重试",
           duration: 3000,
         })
@@ -189,33 +162,29 @@ export default function WorkloadReviewPage() {
         setIsLoading(false)
       }
     }
-    fetchWorkloads()
+    fetchProjects()
   }
 
-  // 筛选工作量
+  // 筛选项目
   useEffect(() => {
-    let filtered = [...workloads]
+    let filtered = [...projects]
     
     if (selectedSubmitter && selectedSubmitter !== "all") {
       filtered = filtered.filter(w => w.submitter.id.toString() === selectedSubmitter)
     }
-    
-    if (selectedSource && selectedSource !== "all") {
-      filtered = filtered.filter(w => w.source === selectedSource)
-    }
-    
+
     if (user?.role === "teacher" && selectedRole && selectedRole !== "all") {
       filtered = filtered.filter(w => w.submitter.role === selectedRole)
     }
     
-    setFilteredWorkloads(filtered)
-  }, [workloads, selectedSubmitter, selectedSource, selectedRole, user])
+    setFilteredProjects(filtered)
+  }, [projects, selectedSubmitter, selectedSource, selectedRole, user])
 
   // 计算分页数据
-  const totalPages = Math.ceil(filteredWorkloads.length / itemsPerPage)
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const currentWorkloads = filteredWorkloads.slice(startIndex, endIndex)
+  const currentProjects = filteredProjects.slice(startIndex, endIndex)
 
   // 处理页码变化
   const handlePageChange = (page: number) => {
@@ -228,9 +197,9 @@ export default function WorkloadReviewPage() {
         <Card className="p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div className="space-y-1">
-              <h3 className="text-2xl font-semibold tracking-tight">待审核工作量</h3>
+              <h3 className="text-2xl font-semibold tracking-tight">待审核项目</h3>
               <p className="text-sm text-muted-foreground">
-                查看并审核{user?.role === "mentor" ? "学生" : ""}提交的工作量
+                查看并审核{user?.role === "mentor" ? "学生" : ""}提交的项目
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
@@ -289,11 +258,11 @@ export default function WorkloadReviewPage() {
                 }}
               >
                 <SelectTrigger className="w-full sm:w-[180px] h-10">
-                  <SelectValue placeholder="选择工作量来源" />
+                  <SelectValue placeholder="选择项目状态" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">全部来源</SelectItem>
-                  {Object.entries(sourceMap).map(([key, value]) => (
+                  <SelectItem value="all">全部类型</SelectItem>
+                  {Object.entries(projectStatusMap).map(([key, value]) => (
                     <SelectItem key={key} value={key}>
                       {value}
                     </SelectItem>
@@ -307,15 +276,13 @@ export default function WorkloadReviewPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold">工作量名称</TableHead>
-                  <TableHead className="font-semibold">提交人</TableHead>
-                  <TableHead className="font-semibold">工作量来源</TableHead>
-                  <TableHead className="font-semibold">工作类型</TableHead>
+                  <TableHead className="font-semibold">项目名称</TableHead>
+                  <TableHead className="font-semibold">项目状态</TableHead>
                   <TableHead className="font-semibold">开始日期</TableHead>
-                  <TableHead className="font-semibold">结束日期</TableHead>
+                  <TableHead className="font-semibold">提交人</TableHead>
                   <TableHead className="font-semibold">提交时间</TableHead>
                   <TableHead className="font-semibold">状态</TableHead>
-                  <TableHead className="text-right font-semibold">操作</TableHead>
+                  <TableHead className="text-center font-semibold">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -327,41 +294,40 @@ export default function WorkloadReviewPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : currentWorkloads.length === 0 ? (
+                ) : currentProjects.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="h-32 text-center">
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
-                        <p>暂无待审核的工作量</p>
-                        <p className="text-sm">请等待学生提交工作量</p>
+                        <p>暂无待审核的项目</p>
+                        <p className="text-sm">请等待学生提交项目</p>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  currentWorkloads.map((workload) => (
-                    <TableRow key={workload.id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium">{workload.name}</TableCell>
-                      <TableCell>{workload.submitter.username}</TableCell>
-                      <TableCell>{sourceMap[workload.source]}</TableCell>
-                      <TableCell>{typeMap[workload.work_type]}</TableCell>
-                      <TableCell>{format(new Date(workload.start_date), "yyyy年MM月dd日")}</TableCell>
-                      <TableCell>{format(new Date(workload.end_date), "yyyy年MM月dd日")}</TableCell>
-                      <TableCell>{format(new Date(workload.created_at), "yyyy年MM月dd日 HH:mm:ss")}</TableCell>
+                  currentProjects.map((project) => (
+                    <TableRow key={project.id} className="hover:bg-gray-50">
+                      <TableCell className="font-medium">{project.name}</TableCell>
+                      <TableCell>{projectStatusMap[project.project_status]}</TableCell>
+                      <TableCell>{project.start_date}</TableCell>
+                      <TableCell>{project.submitter.username}</TableCell>
+                      <TableCell>{format(new Date(project.created_at), "yyyy年MM月dd日 HH:mm:ss")}</TableCell>
                       <TableCell>
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                          workload.status.includes("approved") 
+                          project.review_status.includes("approved") 
                             ? "bg-green-50 text-green-700 ring-1 ring-green-600/20"
-                            : workload.status.includes("rejected")
+                            : project.review_status.includes("rejected")
                             ? "bg-red-50 text-red-700 ring-1 ring-red-600/20"
                             : "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20"
                         }`}>
-                          {statusMap[workload.status]}
+                          {reviewStatusMap[project.review_status]}
                         </span>
                       </TableCell>
+
                       <TableCell className="text-right">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => router.push(`/workload/review/${workload.id}`)}
+                          onClick={() => router.push(`/project/review/${project.id}`)}
                           className="h-8 px-3 hover:bg-gray-100"
                         >
                           审核
@@ -374,10 +340,10 @@ export default function WorkloadReviewPage() {
             </Table>
 
             {/* 分页控件 */}
-            {!isLoading && filteredWorkloads.length > 0 && (
+            {!isLoading && filteredProjects.length > 0 && (
               <div className="flex items-center justify-between px-4 py-4 border-t bg-white">
                 <div className="text-sm text-gray-500">
-                  共 {filteredWorkloads.length} 条记录
+                  共 {filteredProjects.length} 条记录
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button

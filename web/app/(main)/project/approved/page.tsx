@@ -35,7 +35,6 @@ export default function ProjectReviewHistoryPage() {
   const [submitters, setSubmitters] = useState<{ id: number; username: string }[]>([])
   const [selectedSubmitter, setSelectedSubmitter] = useState<string | undefined>(undefined)
   const [selectedProjectStatus, setSelectedProjectStatus] = useState<string | undefined>(undefined)
-  const [selectedReviewStatus, setSelectedReviewStatus] = useState<string | undefined>(undefined)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -44,7 +43,7 @@ export default function ProjectReviewHistoryPage() {
     const fetchProjects = async () => {
       try {
         setIsLoading(true)
-        const response = await api.get("/project/reviewed/")
+        const response = await api.get("/project/approved_review/")
         const projectData = Array.isArray(response.data) ? response.data : []
         setProjects(projectData)
         setFilteredProjects(projectData)
@@ -58,7 +57,7 @@ export default function ProjectReviewHistoryPage() {
         setSubmitters(uniqueSubmitters)
       } catch (error: any) {
         console.error("获取已审核项目列表失败:", error)
-        
+
         if (error.response?.status === 401) {
           router.push("/login")
           return
@@ -79,15 +78,15 @@ export default function ProjectReviewHistoryPage() {
   // 筛选项目
   useEffect(() => {
     let filtered = [...projects]
-    
+
     if (selectedSubmitter && selectedSubmitter !== "all") {
       filtered = filtered.filter(w => w.submitter.id.toString() === selectedSubmitter)
     }
-    
+
     if (selectedProjectStatus && selectedProjectStatus !== "all") {
       filtered = filtered.filter(w => w.project_status === selectedProjectStatus)
     }
-    
+
     setFilteredProjects(filtered)
   }, [projects, selectedSubmitter, selectedProjectStatus])
 
@@ -278,4 +277,4 @@ export default function ProjectReviewHistoryPage() {
       </div>
     </div>
   )
-} 
+}

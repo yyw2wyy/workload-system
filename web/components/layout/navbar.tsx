@@ -42,7 +42,8 @@ const navigation = [
     name: "项目申报",
     items: [
       { name: "申报项目", href: "/project/declare" },
-      { name: "已申报项目", href: "/project/declared"}
+      { name: "已申报项目", href: "/project/declared"},
+      { name: "已批准项目", href: "/project/approved"}
     ],
   },
   {
