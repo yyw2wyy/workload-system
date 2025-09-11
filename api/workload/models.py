@@ -184,6 +184,10 @@ class Workload(models.Model):
             if self.project.review_status != 'approved':
                 raise ValidationError('只能选择教师已审核的项目')
 
+        if self.source == 'innovation':
+            if self.submitter.role == 'student':
+                raise ValidationError('学生不能提交大创类工作量')
+
     @transaction.atomic
     def save(self, *args, **kwargs):
         # 清理与 source 无关的字段
