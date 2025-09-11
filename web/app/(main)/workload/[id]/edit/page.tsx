@@ -220,7 +220,7 @@ export default function WorkloadEditPage({
       if (values.attachments) {
         formData.append("attachments", values.attachments)
       }
-      if (["innovation", "horizontal", "documentation"].includes(values.source)) {
+      if (["horizontal"].includes(values.source)) {
           formData.append("project_id", String(values.project_id))
       }
 
@@ -330,7 +330,7 @@ export default function WorkloadEditPage({
                         </FormItem>
                       )}
                     />
-                    {["innovation", "horizontal", "documentation"].includes(form.watch("source")) ? (
+                    {["horizontal"].includes(form.watch("source")) ? (
                       <FormField
                         control={form.control}
                         name="project_id"

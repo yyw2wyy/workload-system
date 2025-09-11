@@ -602,6 +602,12 @@ NEXT_PUBLIC_API_URL=http://localhost:8888/api
 
 ---
 
+## 警告
+
+1. 拉取最新的代码后的第一件事运行数据库迁移`python manager.py migrate`。
+2. 不要修改任何已有的数据库迁移文件`0006_xxx.py`
+3. 修改数据model后产生的新数据库迁移文件，第一时间上传git
+
 ## 常见问题
 
 - **前端无法连接后端**：API服务是否正常运行、前端的API基础URL配置是否正确、是否存在端口冲突

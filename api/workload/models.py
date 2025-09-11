@@ -178,7 +178,7 @@ class Workload(models.Model):
         if self.teacher_reviewer and self.teacher_reviewer.role != 'teacher':
             raise ValidationError('教师审核人必须是教师角色')
 
-        if self.source in ['innovation', 'horizontal', 'documentation']:
+        if self.source in ['horizontal']:
             if not self.project:
                 raise ValidationError('该工作来源必须选择一个已审核项目')
             if self.project.review_status != 'approved':
@@ -196,7 +196,7 @@ class Workload(models.Model):
         if self.source != 'assistant':
             self.assistant_salary_paid = None
 
-        if self.source not in ['innovation', 'horizontal', 'documentation']:
+        if self.source not in ['horizontal']:
             self.project = None
 
         # 如果是新创建的记录，确保ID不使用固定值，而是自动生成

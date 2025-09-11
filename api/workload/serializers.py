@@ -157,10 +157,10 @@ class WorkloadSerializer(serializers.ModelSerializer):
         project = data.get('project_id') or getattr(self.instance, 'project', None)
         name = data.get('name') or getattr(self.instance, 'name', None)
 
-        if source in ['innovation', 'horizontal', 'documentation']:
+        if source in ['horizontal']:
             if not project:
                 raise serializers.ValidationError({
-                    "project": "大创/横向/材料撰写的工作量必须选择一个已审核通过的项目"
+                    "project": "横向的工作量必须选择一个已审核通过的项目"
                 })
             if project.review_status != 'approved':  # 假设 Project 有 status 字段，且教师审核通过标记为 approved
                 raise serializers.ValidationError({

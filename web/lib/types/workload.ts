@@ -209,7 +209,7 @@ export const workloadFormSchema = z.object({
   message: "大创类工作量的占比总和必须为100",
   path: ["shares"],
 }).refine((data) => {
-  if (["horizontal", "innovation", "documentation"].includes(data.source)) return !!data.project_id
+  if (["horizontal"].includes(data.source)) return !!data.project_id
   return true
 }, {
   message: "请选择关联项目",

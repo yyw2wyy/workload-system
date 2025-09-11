@@ -123,7 +123,7 @@ class WorkloadAdmin(admin.ModelAdmin):
             self.inlines = []
 
         # 如果来源是大创/横向/材料撰写，插入 project 字段
-        if obj and obj.source in ['innovation', 'horizontal', 'documentation']:
+        if obj and obj.source in ['horizontal']:
             base_fields = list(fieldsets[0][1]['fields'])
             if 'project' not in base_fields:
                 base_fields.insert(3, 'project')  # 放在 source 后面

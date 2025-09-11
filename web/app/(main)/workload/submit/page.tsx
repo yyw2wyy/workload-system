@@ -235,7 +235,7 @@ export default function WorkloadSubmitPage() {
         formData.append("mentor_reviewer_id", data.mentor_reviewer);
       }
 
-      if (["innovation", "horizontal", "documentation"].includes(data.source)) {
+      if (["horizontal"].includes(data.source)) {
         // 提交 project_id
         formData.append("project_id", String(data.project_id))
       }
@@ -389,7 +389,7 @@ export default function WorkloadSubmitPage() {
                   )}
                 />
                 {/* 动态渲染：来源为项目型时 → 选择项目 */}
-                {["innovation", "horizontal", "documentation"].includes(sourceValue) ? (
+                {["horizontal"].includes(sourceValue) ? (
                   <FormField
                     control={form.control}
                     name="project_id"
