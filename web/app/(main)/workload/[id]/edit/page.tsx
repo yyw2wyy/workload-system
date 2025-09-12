@@ -36,6 +36,7 @@ import "dayjs/locale/zh-cn"
 import "antd/dist/reset.css"
 import {
     sourceOptions,
+    studentSourceOptions,
     typeOptions,
     intensityTypeOptions,
     innovationStageOptions,
@@ -71,6 +72,9 @@ export default function WorkloadEditPage({
     const userRole = localStorage.getItem('userRole')
     setIsStudent(userRole === 'student')
   }, [])
+
+    // 根据角色切换选项
+  const availableSourceOptions = isStudent ? studentSourceOptions : sourceOptions
 
   // 获取审核人列表
   useEffect(() => {
@@ -315,7 +319,7 @@ export default function WorkloadEditPage({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {sourceOptions.map((option) => (
+                              {availableSourceOptions.map((option) => (
                                 <SelectItem
                                   key={option.value}
                                   value={option.value}

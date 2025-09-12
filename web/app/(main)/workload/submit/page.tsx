@@ -38,6 +38,7 @@ import {
   WorkloadFormValues,
   defaultFormValues,
   sourceOptions,
+  studentSourceOptions,
   typeOptions,
   intensityTypeOptions,
   innovationStageOptions,
@@ -99,6 +100,9 @@ export default function WorkloadSubmitPage() {
     const userRole = localStorage.getItem('userRole')
     setIsStudent(userRole === 'student')
   }, [])
+
+  // 根据角色切换选项
+  const availableSourceOptions = isStudent ? studentSourceOptions : sourceOptions
 
   // 获取审核人列表
   useEffect(() => {
@@ -373,7 +377,7 @@ export default function WorkloadSubmitPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {sourceOptions.map((option) => (
+                          {availableSourceOptions.map((option) => (
                             <SelectItem
                               key={option.value}
                               value={option.value}

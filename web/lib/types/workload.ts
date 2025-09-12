@@ -11,6 +11,11 @@ export const sourceMap = {
   other: "其他",
 } as const
 
+// 学生可用映射（过滤掉“大创”）
+export const studentSourceMap = Object.fromEntries(
+  Object.entries(sourceMap).filter(([key]) => key !== "innovation")
+) as typeof sourceMap
+
 // 大创阶段映射
 export const innovationStageMap = {
   before: "立项前",
@@ -55,6 +60,11 @@ export const sourceOptions = [
   { value: "assistant", label: "助教" },
   { value: "other", label: "其他" },
 ] as const
+
+// 学生可用选项（过滤掉“大创”）
+export const studentSourceOptions = sourceOptions.filter(
+  (opt) => opt.value !== "innovation"
+)
 
 export const innovationStageOptions = [
   { value: "before", label: "立项前" },

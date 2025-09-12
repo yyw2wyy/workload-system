@@ -145,6 +145,10 @@ class WorkloadSerializer(serializers.ModelSerializer):
             if submitter_id not in [s['user'].id if isinstance(s['user'], User) else s['user'] for s in shares]:
                 raise serializers.ValidationError({"shares": "提交者必须包含在大创类工作量的占比中"})
 
+        # 学生不能提交大创工作量
+        if source == 'innovation' and request.user.role == 'student':
+            raise serializers.ValidationError("学生不能提交大创类工作量")
+
         # 助教必须填写工资
         assistant_salary_paid = data.get('assistant_salary_paid') or getattr(self.instance, 'assistant_salary_paid',
                                                                                 None)

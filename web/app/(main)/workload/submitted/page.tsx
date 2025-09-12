@@ -34,7 +34,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
-import {sourceMap, typeMap, intensityTypeMap, statusMap, Workload} from "@/lib/types/workload"
+import {
+  sourceMap,
+  studentSourceMap,
+  typeMap,
+  intensityTypeMap,
+  statusMap,
+  Workload,
+} from "@/lib/types/workload"
 
 
 export default function WorkloadSubmittedPage() {
@@ -52,6 +59,9 @@ export default function WorkloadSubmittedPage() {
     const userRole = localStorage.getItem('userRole')
     setIsStudent(userRole === 'student')
   }, [])
+
+    // 根据角色切换选项
+  const availableSourceMap = isStudent ? studentSourceMap : sourceMap
 
   const fetchWorkloads = async () => {
     try {
@@ -190,7 +200,7 @@ export default function WorkloadSubmittedPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">全部来源</SelectItem>
-                  {Object.entries(sourceMap).map(([key, value]) => (
+                  {Object.entries(availableSourceMap).map(([key, value]) => (
                     <SelectItem key={key} value={key}>
                       {value}
                     </SelectItem>
@@ -239,7 +249,7 @@ export default function WorkloadSubmittedPage() {
                   currentWorkloads.map((workload) => (
                     <TableRow key={workload.id} className="hover:bg-gray-50">
                       <TableCell className="font-medium">{workload.name}</TableCell>
-                      <TableCell>{sourceMap[workload.source]}</TableCell>
+                      <TableCell>{availableSourceMap[workload.source]}</TableCell>
                       <TableCell>{typeMap[workload.work_type]}</TableCell>
                       <TableCell>{format(new Date(workload.start_date), "yyyy年MM月dd日")}</TableCell>
                       <TableCell>{format(new Date(workload.end_date), "yyyy年MM月dd日")}</TableCell>
