@@ -81,3 +81,26 @@ class Project(models.Model):
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
+
+class ProjectShare(models.Model):
+    """项目共同参与者"""
+    project = models.ForeignKey(
+        'Project',
+        on_delete=models.CASCADE,
+        related_name='shares',
+        verbose_name='项目参与者'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='project_shares',
+        verbose_name='参与用户'
+    )
+
+    class Meta:
+        verbose_name = '项目参与情况'
+        verbose_name_plural = '项目参与情况'
+        unique_together = ('project', 'user')  # 同一个项目中不能重复添加同一个用户
+
+    def __str__(self):
+        return f"{self.user.username} - ({self.project.name})"

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { api } from "@/lib/axios"
-import { DatePicker, ConfigProvider } from "antd"
+import {DatePicker, ConfigProvider, Select as AntdSelect} from "antd"
 import dayjs from "dayjs"
 import zhCN from "antd/locale/zh_CN"
 import "dayjs/locale/zh-cn"
@@ -40,6 +40,7 @@ import {
   defaultFormValues,
   statusOptions,
 } from "@/lib/types/project"
+import {useAuthStore} from "@/lib/store/auth";
 
 type Reviewer = {
   id: number
@@ -65,6 +66,8 @@ export default function WorkloadDeclarePage() {
   const [fileList, setFileList] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [allUsers, setAllUsers] = useState<Reviewer[]>([]);
+  const authUser = useAuthStore((state) => state.user);
 
   // 从本地存储获取用户角色
   useEffect(() => {
@@ -72,6 +75,40 @@ export default function WorkloadDeclarePage() {
     setIsStudent(userRole === 'student')
     setIsTeacher(userRole === 'teacher')
   }, [])
+
+  // 获取所有非老师用户
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await api.get("/user/list/");
+
+        const userRole = localStorage.getItem('userRole')
+        setIsTeacher(userRole === 'teacher')
+
+        // 获取所有非老师用户
+        const users = response.data.filter((u: Reviewer) => u.role !== "teacher");
+        setAllUsers(users);
+
+        if (userRole === 'teacher') {
+          // 老师不需要加入自己
+          const submitterShare = {};
+          form.setValue("shares", [submitterShare]);
+          console.log("shares:")
+          console.log(submitterShare)
+        } else {
+          // 初始化shares：自动加入项目参与人（当前登录用户）
+          const submitterShare = {
+            user: authUser!.id,
+          };
+          form.setValue("shares", [submitterShare]);
+        }
+
+      } catch (error) {
+        toast.error("获取用户列表失败", { duration: 3000 });
+      }
+    };
+    fetchUsers();
+  }, [authUser, form]);
 
   async function onSubmit(data: ProjectFormValues) {
     try {
@@ -83,6 +120,7 @@ export default function WorkloadDeclarePage() {
       formData.append("name", data.name);
       formData.append("project_status", data.project_status);
       formData.append("start_date", format(data.start_date, "yyyy-MM-dd"));
+      formData.append("shares", JSON.stringify(data.shares));
 
 
       // 老师不需要审核
@@ -265,6 +303,85 @@ export default function WorkloadDeclarePage() {
                     )}
                   />
                 </div>
+
+                <FormField
+                    control={form.control}
+                    name="shares"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">参与人</FormLabel>
+                        <div className="space-y-4">
+                          {field.value?.map((participate, index) => {
+                            const userObj = allUsers.find((u) => u.id === participate.user);
+                            const isSubmitter = participate.user === authUser?.id;
+
+                            return (
+                              <div key={index} className="flex items-center space-x-4">
+                                {/* 用户选择（申请人不可改） */}
+                                <AntdSelect
+                                  showSearch
+                                  style={{ width: 200 }}
+                                  placeholder="选择参与人"
+                                  optionFilterProp="label"
+                                  value={participate.user || undefined}
+                                  disabled={isSubmitter && !isTeacher}
+                                  onChange={(val) => {
+                                    const updated = [...field.value]
+                                    updated[index].user = Number(val)
+                                    field.onChange(updated)
+                                  }}
+                                  filterOption={(input, option) =>
+                                    (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
+                                  }
+                                  options={allUsers
+                                    .filter((user) => {
+                                      // 过滤掉已经选择的用户（排除自己和当前行）
+                                      const isAlreadySelected = field.value.some(
+                                        (s, i) => s.user === user.id && i !== index
+                                      );
+                                      return !isAlreadySelected;
+                                    })
+                                    .map((user) => ({
+                                      label: user.username,
+                                      value: user.id,
+                                    }))}
+                                />
+
+                                {/* 删除按钮（申请人不可删） */}
+                                {!isSubmitter && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      const updated = field.value.filter((_, i) => i !== index);
+                                      field.onChange(updated);
+                                    }}
+                                  >
+                                    删除
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
+
+                          {/* 添加参与人按钮 */}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              const updated = field.value ? [...field.value] : [];
+                              updated.push({ user: 0, percentage: 0 });
+                              field.onChange(updated);
+                            }}
+                          >
+                            添加参与人
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                 <div className="flex justify-end space-x-4">
                   <Button
                     type="submit"

@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
 from django.http import HttpResponse
-from .models import Project
+from .models import Project, ProjectShare
 from .serializers import ProjectSerializer, ProjectReviewSerializer
 import logging
 import traceback
@@ -130,7 +130,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
             # 如果是被驳回的项目，修改后重置状态为待审核
             if user.role != 'teacher' and instance.review_status == 'rejected':
-                serializer.save(status='pending')
+                serializer.save(review_status='pending')
             else:
                 serializer.save()
 
@@ -175,6 +175,54 @@ class ProjectViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    # @action(detail=False, methods=['get'])
+    # def getRelatedById(self, request):
+    #     def get_related_project_ids(user):
+    #         print(user.id)
+    #         queryset = ProjectShare.objects.filter(
+    #             Q(user_id=user.id)  # 提交的待审核项目
+    #         )
+    #
+    #         serializer = self.get_serializer(queryset, many=True)
+    #
+    #         return serializer.data
+    #
+    #     user = self.request.user
+    #
+    #     project_ids = get_related_project_ids(user)
+    #
+    #     print(project_ids)
+    #
+    #     queryset = Project.objects.filter(
+    #         Q(id in project_ids)  # 提交的待审核项目
+    #     )
+    #
+    #     serializer = self.get_serializer(queryset, many=True)
+    #     return Response(serializer.data)
+
+    # 只有老师能看到所有的项目，其他人只能看到和自己相关的
+    # 获取每个人自身关联的项目
+    @action(detail=False, methods=['get'])
+    def getRelatedById(self, request):
+        try:
+            user = self.request.user
+
+            project_ids = ProjectShare.objects.filter(
+                user_id=user.id
+            ).values_list('project_id', flat=True)
+            projects = Project.objects.filter(id__in=project_ids)
+
+            serializer = self.get_serializer(projects, many=True)
+            return Response(serializer.data)
+
+        except Exception as e:
+            # 记录异常并返回错误响应
+            print(f"Error in getRelatedById: {str(e)}")
+            return Response(
+                {"error": "服务器内部错误"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     @action(detail=False, methods=['get'])
     def pending_review(self, request):
         """获取待审核的项目列表"""
@@ -188,10 +236,18 @@ class ProjectViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def approved_review(self, request):
+        user = self.request.user
         """获取审核成功的项目列表"""
-        queryset = Project.objects.filter(
-            Q(review_status='approved')
-        )
+        if user.role == 'teacher':
+            # 教师可以看到所有项目
+            queryset = Project.objects.filter(
+                Q(review_status='approved')
+            )
+        else:
+            # 其他人什么都看不到
+            queryset = Project.objects.filter(
+                Q(review_status='teacher_want_you_see')
+            )
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

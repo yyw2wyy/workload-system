@@ -117,6 +117,16 @@ export default function ProjectDetailPage({
                 <Label className="text-sm font-medium text-gray-500">项目状态</Label>
                 <div className="text-base">{projectStatusMap[project.project_status]}</div>
               </div>
+              <div className="col-span-1 sm:col-span-2 space-y-2.5">
+                  <Label className="text-sm font-medium text-gray-500">参与人</Label>
+                  <div className="rounded-lg border bg-gray-50/50 p-4 space-y-2">
+                    {project.shares.map((share) => (
+                      <div key={share.user} className="flex justify-between items-center text-base">
+                        <span>{share.user_info.username}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               <div className="space-y-2.5">
                 <Label className="text-sm font-medium text-gray-500">开始日期</Label>
                 <div className="text-base">{project.start_date}</div>

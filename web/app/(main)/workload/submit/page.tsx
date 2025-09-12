@@ -153,7 +153,7 @@ export default function WorkloadSubmitPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await api.get("/project/approved_review/")
+        const response = await api.get("/project/getRelatedById/")
         const filtered = response.data.filter((p: Project) => p.review_status === "approved");
         setProjects(filtered) // 这里后端返回的需要是 [{id, name}]
       } catch (err) {

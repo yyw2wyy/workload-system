@@ -1,4 +1,5 @@
 import * as z from "zod"
+import {WorkloadShare} from "@/lib/types/workload";
 
 // 项目状态映射
 export const projectStatusMap = {
@@ -28,6 +29,15 @@ export const reviewOptions = [
 export type ProjectStatus = keyof typeof projectStatusMap
 export type ReviewStatus = keyof typeof reviewStatusMap
 
+export type ProjectShare = {
+  user: number
+  user_info: {
+    id: number
+    username: string
+    role: string
+  }
+}
+
 export interface Project {
   id: number
   name: string
@@ -48,6 +58,7 @@ export interface Project {
     username: string
     role: string
   }
+  shares?: ProjectShare[]
 }
 
 // 表单验证模式
@@ -60,6 +71,13 @@ export const projectFormSchema = z.object({
     required_error: "请选择项目开始日期",
   }),
   teacher_reviewer: z.string().optional(),
+  shares: z
+    .array(
+      z.object({
+        user: z.number({ required_error: "请选择参与人" }),
+      })
+    )
+   .default([]),
 })
 
 // 表单类型定义
