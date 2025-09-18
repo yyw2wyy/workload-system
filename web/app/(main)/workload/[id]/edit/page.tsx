@@ -309,30 +309,41 @@ export default function WorkloadEditPage({
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                  <FormField
+                    <FormField
                       control={form.control}
                       name="source"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-base">工作量来源</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="h-11">
-                                <SelectValue placeholder="请选择工作量来源" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {availableSourceOptions.map((option) => (
-                                <SelectItem
-                                  key={option.value}
-                                  value={option.value}
-                                  className="cursor-pointer hover:bg-gray-100"
-                                >
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormControl>
+                            {isReviewer ? (
+                              // 审核人员：只展示文字，不可修改
+                              <div className="h-11 flex items-center px-3 border rounded bg-gray-50">
+                                {
+                                  availableSourceOptions.find((opt) => opt.value === field.value)?.label ||
+                                  workload?.source ||
+                                  "无"
+                                }
+                              </div>
+                            ) : (
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <SelectTrigger className="h-11">
+                                  <SelectValue placeholder="请选择工作量来源" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableSourceOptions.map((option) => (
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                      className="cursor-pointer hover:bg-gray-100"
+                                    >
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </FormControl>
                           <FormMessage className="empty:hidden" />
                         </FormItem>
                       )}
