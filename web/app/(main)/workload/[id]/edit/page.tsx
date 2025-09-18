@@ -66,6 +66,8 @@ export default function WorkloadEditPage({
   const [reviewers, setReviewers] = useState<Reviewer[]>([])
   const [allUsers, setAllUsers] = useState<Reviewer[]>([])
   const authUser = useAuthStore((state) => state.user)
+  // 判断是否审核人员
+  const isReviewer = Boolean(resolvedSearchParams.returnUrl)
 
   // 从本地存储获取用户角色
   useEffect(() => {
@@ -126,7 +128,7 @@ export default function WorkloadEditPage({
     useEffect(() => {
       const fetchProjects = async () => {
         try {
-          const response = await api.get("/project/approved_review/")
+          const response = await api.get("/project/getRelatedById/")
           const filtered = response.data.filter((p: Project) => p.review_status === "approved")
           setProjects(filtered) // [{id, name}]
         } catch (err) {
@@ -169,6 +171,7 @@ export default function WorkloadEditPage({
           assistantSalaryPaid: workload.assistant_salary_paid?.toString() || "",
           mentor_reviewer: workload.mentor_reviewer?.id.toString() || "",
           shares: workload.shares || [], // 初始化 shares
+          project_id: workload.project?.id ?? null,
         })
 
         // 设置工作量数据
@@ -342,6 +345,12 @@ export default function WorkloadEditPage({
                           <FormItem>
                             <FormLabel className="text-base">关联项目</FormLabel>
                             <FormControl>
+                              {isReviewer ? (
+                                // 审核人员：只展示文字，不可修改
+                                <div className="h-11 flex items-center px-3 border rounded bg-gray-50">
+                                  {workload?.project?.name || "无"}
+                                </div>
+                              ) : (
                               <AntdSelect
                                 {...field}
                                 style={{ width: "100%", height: 44 }}
@@ -359,6 +368,7 @@ export default function WorkloadEditPage({
                                 }}
                                 value={field.value || workload?.project?.id} // 编辑时默认选中原项目
                               />
+                              )}
                             </FormControl>
                             <FormMessage className="empty:hidden" />
                           </FormItem>
@@ -371,10 +381,17 @@ export default function WorkloadEditPage({
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-base">工作量名称</FormLabel>
-                              <FormControl>
+                            <FormControl>
+                              {isReviewer ? (
+                                // 审核人员：只读展示
+                                <div className="h-11 flex items-center px-3 border rounded bg-gray-50">
+                                  {field.value || workload?.name}
+                                </div>
+                              ) : (
                                 <Input placeholder="请输入工作量名称" className="h-11" {...field} />
-                              </FormControl>
-                              <FormMessage className="empty:hidden" />
+                              )}
+                            </FormControl>
+                            <FormMessage className="empty:hidden" />
                           </FormItem>
                         )}
                       />
