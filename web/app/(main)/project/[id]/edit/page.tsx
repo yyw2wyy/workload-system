@@ -70,6 +70,7 @@ export default function ProjectEditPage({
   useEffect(() => {
     const userRole = localStorage.getItem('userRole')
     setIsStudent(userRole === 'student')
+    setIsTeacher(userRole === 'teacher')
   }, [])
 
   // 初始化表单
@@ -78,15 +79,7 @@ export default function ProjectEditPage({
     defaultValues: defaultFormValues,
   })
 
-    // 从本地存储获取用户角色
-  useEffect(() => {
-    const userRole = localStorage.getItem('userRole')
-    setIsStudent(userRole === 'student')
-    setIsTeacher(userRole === 'teacher')
-  }, [])
-
-
-    // 获取所有非老师用户
+  // 获取所有非老师用户（并根据身份初始化 shares）
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -97,15 +90,16 @@ export default function ProjectEditPage({
         setAllUsers(users);
 
         if (isTeacher) {
-          // 老师不需要加入自己
-          const submitterShare = {};
-          form.setValue("shares", [submitterShare]);
-        } else {
-          // 初始化shares：自动加入项目参与人（当前登录用户）
+          // 老师不需要加入自己，使用空数组（之前用 {} 导致缺少 user 字段的 TS2741 错误）
+          form.setValue("shares", []);
+        } else if (authUser) {
+          // 确保 authUser 已就绪再使用 authUser.id，避免 TS18047（可能为 null）
           const submitterShare = {
-            user: authUser!.id,
+            user: authUser.id,
           };
           form.setValue("shares", [submitterShare]);
+        } else {
+          // authUser 尚未初始化，不在此处设置 shares，让下面的 effect 在 authUser 可用时处理
         }
 
       } catch (error) {
@@ -113,15 +107,13 @@ export default function ProjectEditPage({
       }
     };
     fetchUsers();
-  }, [authUser, form]);
+  }, [authUser, form, isTeacher]);
 
-useEffect(() => {
+  // 如果 shares 为空且 authUser 可用，则把当前用户加入 shares（补充防护，防止 race condition）
+  useEffect(() => {
     const currentShares = form.getValues("shares");
-    if (!currentShares || currentShares.length === 0) {
-      const submitterShare = {
-        user: authUser.id,
-      };
-      form.setValue("shares", [submitterShare]);
+    if ((!currentShares || currentShares.length === 0) && authUser) {
+      form.setValue("shares", [{ user: authUser.id }]);
     }
 }, [authUser, form]);
 
@@ -362,7 +354,7 @@ useEffect(() => {
                                 variant="outline"
                                 onClick={() => {
                                   const updated = field.value ? [...field.value] : [];
-                                  updated.push({ user: 0, percentage: 0 });
+                                  updated.push({ user: 0});
                                   field.onChange(updated);
                                 }}
                               >

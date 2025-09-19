@@ -58,7 +58,7 @@ export interface Project {
     username: string
     role: string
   }
-  shares?: ProjectShare[]
+  shares: ProjectShare[]
 }
 
 // 表单验证模式
