@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     default-mysql-client \
     && rm -rf /var/lib/apt/lists/*
 
+# 设置pip源和超时
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ \
+    && pip config set global.timeout 120
+
 # 复制项目文件
 COPY . /app/
 
